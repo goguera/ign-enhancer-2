@@ -3,7 +3,7 @@
   "name": "IGN Enhancer 2",
   "version": "0.0.0",
   "icons": {
-    "48": "logo.png"
+    "48": "assets/icons/logo.png"
   },
   "description": "Addon para turbinar o nosso querido Fórum IGN",
   "homepage_url": "https://github.com/goguera/ign-enhancer-2",
@@ -30,7 +30,7 @@
   "browser_action": {
     "default_popup": "popup.html",
     "default_icon": {
-       "48": "logo.png"
+       "48": "assets/icons/logo.png"
     },
     "default_title": "tiny title",
     "__chrome|opera__chrome_style": false,

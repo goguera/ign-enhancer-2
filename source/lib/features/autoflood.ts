@@ -1,11 +1,11 @@
-import { XhrData } from './types';
+import { XhrData } from '@lib/types';
+import { xhrDataObservable } from '@lib/utils/xhr.observable';
 
 let onAntiFlood = false;
 
 function detectSubmitButton(currentUrl: string): HTMLButtonElement | null {
   const location = currentUrl.split('/')[1].split('/')[0];
   let button: HTMLButtonElement | undefined;
-  console.log('location', location);
   const allButtons = document.querySelectorAll<HTMLButtonElement>('button[type=submit]');
   if (location === 'conversations' || location === 'threads') {
     button = allButtons[4];
@@ -53,16 +53,13 @@ async function startAntiFloodCountdown(
   replyButton.click();
 }
 
-function startAntiFlood(xhrData: any, errorMessage: string): void {
-  console.log('startAntiFlood', xhrData, errorMessage);
+function startAutoFlood(xhrData: any, errorMessage: string): void {
   if (onAntiFlood) {
-    console.log('onAntiFlood', onAntiFlood);
     closeAntiFloodMessage();
     return;
   }
   onAntiFlood = true;
   const replyButton = detectSubmitButton(xhrData.url);
-  console.log('replyButton', replyButton);
   if (replyButton === null) {
     onAntiFlood = false;
     return;
@@ -78,19 +75,14 @@ function xhrCallback(data: { xhrData: XhrData }): void {
     const stringToCheck = 'must wait at least';
     const includesTheString = data.xhrData.errors?.some((error) => error.includes(stringToCheck));
     if (includesTheString) {
-      startAntiFlood(data.xhrData, data.xhrData.errors!.join(' '));
+      startAutoFlood(data.xhrData, data.xhrData.errors!.join(' '));
     }
   }
 }
 
+
 export function initAutoFlood(): void {
-  window.addEventListener(
-    'getXhrData',
-    function (event: CustomEvent<{ data: XhrData }>) {
-      xhrCallback({
-        xhrData: event.detail.data,
-      });
-    } as any,
-    false,
-  );
+  xhrDataObservable.subscribe(data => {
+    xhrCallback({ xhrData: data });
+  });
 }

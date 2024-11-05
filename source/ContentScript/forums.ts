@@ -1,7 +1,5 @@
-import { initNeverEnding } from "./lib/neverending";
+import { initNeverEnding } from '@lib/features/neverending';
+import { initToolbar } from '@lib/features/toolbar/toolbar';
 
-
-console.log('helloworld from content script forums');
-
-
-initNeverEnding()
+initNeverEnding();
+initToolbar();

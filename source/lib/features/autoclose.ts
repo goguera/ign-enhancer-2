@@ -1,6 +1,7 @@
 import { browser } from 'webextension-polyfill-ts';
-import { sleep } from './helpers';
-import { XhrData } from './types';
+import { sleep } from '../utils/helpers';
+import { XhrData } from '../types';
+import { xhrDataObservable } from '@lib/utils/xhr.observable';
 
 let isAutoCloseCanceled = false;
 
@@ -61,13 +62,7 @@ function xhrCallback(data: { xhrData: XhrData }): void {
 }
 
 export function initAutoClose(): void {
-  window.addEventListener(
-    'getXhrData',
-    function (event: CustomEvent<{ data: XhrData }>) {
-      xhrCallback({
-        xhrData: event.detail.data,
-      });
-    } as any,
-    false,
-  );
+  xhrDataObservable.subscribe(data => {
+    xhrCallback({ xhrData: data });
+  });
 }

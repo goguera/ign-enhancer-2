@@ -1,9 +1,7 @@
 import { browser } from 'webextension-polyfill-ts';
-import { injectScript } from './lib/helpers';
-import { initAutoFlood } from './lib/autoflood';
-import { initAutoClose } from './lib/autoclose';
-
-console.log('helloworld from content script threads');
+import { injectScript } from '@lib/utils/helpers';
+import { initAutoFlood } from '@lib/features/autoflood';
+import { initAutoClose } from '@lib/features/autoclose';
 
 export {};
 

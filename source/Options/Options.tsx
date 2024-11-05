@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { browser } from 'webextension-polyfill-ts';
 import './styles.scss';
+import { Settings } from '../lib/types';
+import { setSettings as setExtensionSettings } from '@lib/utils/options';
 
-type Settings = {
-  closeTabOnPost: string;
-  timeToClose: string;
+const defaultSettings: Settings = {
+  closeTabOnPost: 'no',
+  timeToClose: '10',
+  maxNumberOfVisibleThreadsBeforeHalt: '200',
 };
 
 const IGNEnhancerSettings: React.FC = () => {
-  const [settings, setSettings] = useState<Settings>({
-    closeTabOnPost: 'no',
-    timeToClose: '10',
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
 
   useEffect(() => {
     const restoreOptions = async () => {
@@ -22,10 +22,11 @@ const IGNEnhancerSettings: React.FC = () => {
           setSettings({
             closeTabOnPost: result.closeTabOnPost || 'no',
             timeToClose: result.timeToClose || '10',
+            maxNumberOfVisibleThreadsBeforeHalt: '200',
           });
         }
       } catch (error) {
-        setSettings({ closeTabOnPost: 'yes', timeToClose: '55' }); // Default values on error
+        setSettings(defaultSettings); // Default values on error
       }
     };
 
@@ -46,12 +47,11 @@ const IGNEnhancerSettings: React.FC = () => {
       alert('Precisa ser um número inteiro e positivo, animal');
       return;
     }
-    browser.storage.local
-      .set({
-        closeTabOnPost: settings.closeTabOnPost,
-        timeToClose: settings.timeToClose || '10',
-      })
-      .then(() => window.close());
+    setExtensionSettings({
+      closeTabOnPost: settings.closeTabOnPost,
+      timeToClose: settings.timeToClose || '10',
+      maxNumberOfVisibleThreadsBeforeHalt: settings.maxNumberOfVisibleThreadsBeforeHalt || '200',
+    }).then(() => window.close());
   };
 
   const isNormalInteger = (str: string): boolean => {
@@ -103,6 +103,21 @@ const IGNEnhancerSettings: React.FC = () => {
                   name="timeToClose"
                   id="timelimit"
                   value={settings.timeToClose}
+                  onChange={handleInputChange}
+                />
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label htmlFor="maxNumberOfVisibleThreadsBeforeHalt">
+                  Número máximo de tópicos visíveis antes de parar de carregar novos tópicos:
+                </label>
+              </td>
+              <td>
+                <input
+                  name="maxNumberOfVisibleThreadsBeforeHalt"
+                  id="maxNumberOfVisibleThreadsBeforeHalt"
+                  value={settings.maxNumberOfVisibleThreadsBeforeHalt}
                   onChange={handleInputChange}
                 />
               </td>
