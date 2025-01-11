@@ -14,6 +14,7 @@
     "storage",
     "cookies",
     "windows",
+    "browser_action",
     "https://www.ignboards.com/*",
     "*://*.ignboards.com/*"
   ],
@@ -42,13 +43,10 @@
   "__opera__minimum_opera_version": "36",
 
   "browser_action": {
-    "default_popup": "popup.html",
     "default_icon": {
        "48": "assets/icons/logo.png"
     },
-    "default_title": "tiny title",
-    "__chrome|opera__chrome_style": false,
-    "__firefox__browser_style": false
+    "default_title": "IGN Enhancer 2"
   },
 
   "__chrome|opera__options_page": "options.html",

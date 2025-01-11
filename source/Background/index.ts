@@ -1,5 +1,10 @@
 import {browser} from 'webextension-polyfill-ts';
 
+// Handle extension icon click
+browser.browserAction.onClicked.addListener(() => {
+  browser.runtime.openOptionsPage();
+});
+
 function handleMessage(request: any, sender: any): Promise<void> {
   return new Promise((resolve, reject) => {
     if (request.command === 'closeCurrentTab') {

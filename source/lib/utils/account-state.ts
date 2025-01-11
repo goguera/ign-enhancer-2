@@ -112,15 +112,8 @@ export async function startResyncing(accountId: string): Promise<void> {
     throw new Error('Account not found');
   }
 
-  // If there's already a pending account, delete it
-  if (states.pendingAccountId) {
-    delete states.accounts[states.pendingAccountId];
-  }
-
   // Mark the account as resyncing
   account.isResyncing = true;
-  states.pendingAccountId = accountId;
-
   await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
 }
 
@@ -132,24 +125,24 @@ export async function getCurrentAccountState(): Promise<AccountState> {
 
   const cookies = [...cookies1, ...cookies2];
   const localStorage = { ...window.localStorage };
-  const timestamp = new Date().toISOString();
-  const id = crypto.randomUUID();
+  const timestamp = Date.now();
 
-  // Get account states to check for pending/resyncing
-  const states = await getAccountStates();
-  const name = states.pendingAccountId ? 
-    states.accounts[states.pendingAccountId]?.name :
-    'Nova Conta';
+  // Fetch user profile data first
+  const profile = await fetchUserProfile();
+  if (!profile) {
+    throw new Error('Não foi possível obter os dados do perfil');
+  }
 
-  // Fetch user profile data
-  const profile = await fetchUserProfile() || undefined;
+  // Use userId as the unique identifier
+  const id = profile.userId;
+  const name = profile.displayName;
 
   return {
     id,
     name,
     cookies,
     localStorage,
-    timestamp: Number(timestamp),
+    timestamp,
     status: 'pending',
     profile
   };
@@ -158,17 +151,25 @@ export async function getCurrentAccountState(): Promise<AccountState> {
 export async function saveAccountState(state: AccountState): Promise<void> {
   const states = await getAccountStates();
   
-  // If this was a pending account, clear the pendingAccountId
-  if (states.pendingAccountId === state.id) {
-    states.pendingAccountId = undefined;
-  }
-
   // If this was a resync, clear the resyncing flag
   if (states.accounts[state.id]?.isResyncing) {
     state.isResyncing = false;
   }
+
+  // If there's another account with the same userId but different id, remove it
+  const duplicateAccount = Object.values(states.accounts).find(
+    account => account.profile?.userId === state.profile?.userId && account.id !== state.id
+  );
+  if (duplicateAccount) {
+    delete states.accounts[duplicateAccount.id];
+    // If the duplicate was active, transfer active status to the new one
+    if (states.activeAccountId === duplicateAccount.id) {
+      states.activeAccountId = state.id;
+    }
+  }
   
   states.accounts[state.id] = state;
+  states.activeAccountId = state.id; // Mark as active when saving
   await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
 }
 
@@ -185,57 +186,68 @@ export async function switchToAccountState(accountId: string): Promise<void> {
     throw new Error('Account not found');
   }
 
-  // Clear current cookies
-  const [currentCookies1, currentCookies2] = await Promise.all([
-    browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN }),
-    browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN })
-  ]);
+  try {
+    // First get all current cookies to remove them
+    const currentCookies = await Promise.all([
+      browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN }),
+      browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN })
+    ]).then(([cookies1, cookies2]) => [...cookies1, ...cookies2]);
 
-  for (const cookie of [...currentCookies1, ...currentCookies2]) {
-    try {
-      await browser.cookies.remove({
-        url: `https://${cookie.domain}${cookie.path}`,
-        name: cookie.name,
-      });
-    } catch (error) {
-      console.error('Error removing cookie:', error);
+    // Clear localStorage first
+    window.localStorage.clear();
+
+    // Remove all current cookies sequentially to avoid race conditions
+    for (const cookie of currentCookies) {
+      try {
+        await browser.cookies.remove({
+          url: `https://${cookie.domain}${cookie.path}`,
+          name: cookie.name
+        });
+      } catch (error) {
+        console.error('Error removing cookie:', error);
+        // Continue with other cookies even if one fails
+      }
     }
-  }
 
-  // Clear localStorage
-  window.localStorage.clear();
+    // Set new cookies sequentially
+    const cookieErrors: Error[] = [];
+    for (const cookie of account.cookies) {
+      try {
+        // Prepare cookie data
+        const cookieData: Cookies.SetDetailsType = {
+          url: `https://${cookie.domain}${cookie.path}`,
+          name: cookie.name,
+          value: cookie.value,
+          domain: cookie.domain,
+          path: cookie.path,
+          secure: cookie.secure,
+          httpOnly: cookie.httpOnly,
+          sameSite: cookie.sameSite as Cookies.SameSiteStatus,
+          storeId: cookie.storeId,
+          expirationDate: cookie.expirationDate
+        };
 
-  // Set new cookies
-  for (const cookie of account.cookies) {
-    try {
-      // Prepare cookie data
-      const cookieData: Cookies.SetDetailsType = {
-        url: `https://${cookie.domain}${cookie.path}`,
-        name: cookie.name,
-        value: cookie.value,
-        domain: cookie.domain,
-        path: cookie.path,
-        secure: cookie.secure,
-        httpOnly: cookie.httpOnly,
-        sameSite: cookie.sameSite as Cookies.SameSiteStatus,
-        storeId: cookie.storeId,
-        expirationDate: cookie.expirationDate
-      };
-
-      await browser.cookies.set(cookieData);
-    } catch (error) {
-      console.error('Error setting cookie:', error);
+        await browser.cookies.set(cookieData);
+      } catch (error) {
+        console.error('Error setting cookie:', error);
+        cookieErrors.push(error as Error);
+      }
     }
-  }
 
-  // Set localStorage
-  for (const [key, value] of Object.entries(account.localStorage)) {
-    window.localStorage.setItem(key, value);
-  }
+    // If we couldn't set any cookies, throw an error
+    if (cookieErrors.length === account.cookies.length) {
+      throw new Error('Failed to set any cookies');
+    }
 
-  // Update active account
-  states.activeAccountId = accountId;
-  await browser.storage.local.set({ accountStates: states });
+    // Finally set localStorage
+    for (const [key, value] of Object.entries(account.localStorage)) {
+      window.localStorage.setItem(key, value);
+    }
+  } catch (error) {
+    // If anything fails, clear everything to prevent partial state
+    await clearCurrentSession();
+    throw error;
+  }
 }
 
 export async function deleteAccountState(accountId: string): Promise<void> {
@@ -252,4 +264,72 @@ export async function deleteAccountState(accountId: string): Promise<void> {
   }
   
   await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
+}
+
+export async function checkCurrentUser(): Promise<{ profile: UserProfile | null; existingAccount: AccountState | null }> {
+  const profile = await fetchUserProfile();
+  
+  if (!profile) {
+    return { profile: null, existingAccount: null };
+  }
+  
+  // Find if this user already exists in our accounts
+  const states = await getAccountStates();
+  const existingAccount = Object.values(states.accounts).find(
+    account => account.profile?.userId === profile.userId
+  );
+  
+  return { profile, existingAccount: existingAccount || null };
+}
+
+export async function syncCurrentUser(): Promise<void> {
+  const { profile, existingAccount } = await checkCurrentUser();
+  
+  if (!profile) {
+    throw new Error('Nenhum usuário logado');
+  }
+  
+  const states = await getAccountStates();
+  
+  // Get current state with cookies and localStorage
+  const currentState = await getCurrentAccountState();
+  currentState.status = 'synced';
+
+  // Always use the current state but preserve the existing account's id if it exists
+  if (existingAccount) {
+    currentState.id = existingAccount.id;
+  }
+
+  states.accounts[currentState.id] = currentState;
+  states.activeAccountId = currentState.id;
+  await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
+}
+
+export async function exportAccountData(): Promise<string> {
+  const states = await getAccountStates();
+  return JSON.stringify(states, null, 2);
+}
+
+export async function importAccountData(jsonData: string): Promise<void> {
+  try {
+    const data = JSON.parse(jsonData) as AccountStates;
+    
+    // Validate the data structure
+    if (!data || typeof data !== 'object' || !('accounts' in data)) {
+      throw new Error('Formato de dados inválido');
+    }
+
+    // Validate each account
+    for (const account of Object.values(data.accounts)) {
+      if (!account.id || !account.name || !Array.isArray(account.cookies) || 
+          typeof account.localStorage !== 'object' || !account.timestamp) {
+        throw new Error('Estrutura de conta inválida');
+      }
+    }
+
+    // If validation passes, save the data
+    await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: data });
+  } catch (error) {
+    throw new Error('Erro ao importar dados: ' + error);
+  }
 } 

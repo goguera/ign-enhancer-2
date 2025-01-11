@@ -26,7 +26,7 @@ const extensionReloaderPlugin =
         entries: {
           contentScript: 'contentScript',
           background: 'background',
-          extensionPage: ['popup', 'options', 'login'],
+          extensionPage: ['options', 'login'],
         },
       })
     : () => {
@@ -62,7 +62,6 @@ module.exports = {
     background: path.join(sourcePath, 'Background', 'index.ts'),
     contentScriptThreads: path.join(sourcePath, 'ContentScript', 'threads.ts'),
     contentScriptForums: path.join(sourcePath, 'ContentScript', 'forums.ts'),
-    popup: path.join(sourcePath, 'Popup', 'index.tsx'),
     options: path.join(sourcePath, 'Options', 'index.tsx'),
     login: path.join(sourcePath, 'Login', 'index.tsx'),
   },
@@ -144,13 +143,6 @@ module.exports = {
       ],
       cleanStaleWebpackAssets: false,
       verbose: true,
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(viewsPath, 'popup.html'),
-      inject: 'body',
-      chunks: ['popup'],
-      hash: true,
-      filename: 'popup.html',
     }),
     new HtmlWebpackPlugin({
       template: path.join(viewsPath, 'options.html'),
