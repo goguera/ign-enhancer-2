@@ -11,6 +11,7 @@ const WextManifestWebpackPlugin = require('wext-manifest-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+
 const viewsPath = path.join(__dirname, 'views');
 const sourcePath = path.join(__dirname, 'source');
 const destPath = path.join(__dirname, 'extension');
@@ -20,13 +21,12 @@ const targetBrowser = process.env.TARGET_BROWSER;
 const extensionReloaderPlugin =
   nodeEnv === 'development'
     ? new ExtensionReloader({
-        port: 9090, // Which port use to create the server
-        reloadPage: true, // Force the reload of the page also
+        port: 9090,
+        reloadPage: true,
         entries: {
-          // TODO: reload manifest on update
           contentScript: 'contentScript',
           background: 'background',
-          extensionPage: ['popup', 'options'],
+          extensionPage: ['popup', 'options', 'login'],
         },
       })
     : () => {
@@ -46,7 +46,7 @@ const getExtensionFileType = (browser) => {
 };
 
 module.exports = {
-  devtool: false, // https://github.com/webpack/webpack/issues/1194#issuecomment-560382342
+  devtool: false,
 
   stats: {
     all: false,
@@ -64,6 +64,7 @@ module.exports = {
     contentScriptForums: path.join(sourcePath, 'ContentScript', 'forums.ts'),
     popup: path.join(sourcePath, 'Popup', 'index.tsx'),
     options: path.join(sourcePath, 'Options', 'index.tsx'),
+    login: path.join(sourcePath, 'Login', 'index.tsx'),
   },
 
   output: {
@@ -79,7 +80,6 @@ module.exports = {
       }),
     ],
     alias: {
-      // Keep your existing aliases
       'webextension-polyfill-ts': path.resolve(
         path.join(__dirname, 'node_modules', 'webextension-polyfill-ts'),
       ),
@@ -89,12 +89,12 @@ module.exports = {
   module: {
     rules: [
       {
-        type: 'javascript/auto', // prevent webpack handling json with its own loaders,
+        type: 'javascript/auto',
         test: /manifest\.json$/,
         use: {
           loader: 'wext-manifest-loader',
           options: {
-            usePackageJSONVersion: true, // set to false to not use package.json version for manifest
+            usePackageJSONVersion: true,
           },
         },
         exclude: /node_modules/,
@@ -107,11 +107,9 @@ module.exports = {
       {
         test: /\.(sa|sc|c)ss$/,
         use: [
+          MiniCssExtractPlugin.loader,
           {
-            loader: MiniCssExtractPlugin.loader, // It creates a CSS file per JS file which contains CSS
-          },
-          {
-            loader: 'css-loader', // Takes the CSS files and returns the CSS with imports and url(...) for Webpack
+            loader: 'css-loader',
             options: {
               sourceMap: true,
             },
@@ -120,33 +118,22 @@ module.exports = {
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
-                plugins: [
-                  [
-                    'autoprefixer',
-                    {
-                      // Options
-                    },
-                  ],
-                ],
+                plugins: [['autoprefixer', {}]],
               },
             },
           },
-          'resolve-url-loader', // Rewrites relative paths in url() statements
-          'sass-loader', // Takes the Sass/SCSS file and compiles to the CSS
+          'resolve-url-loader',
+          'sass-loader',
         ],
       },
     ],
   },
 
   plugins: [
-    // Plugin to not generate js bundle for manifest entry
     new WextManifestWebpackPlugin(),
-    // Generate sourcemaps
     new webpack.SourceMapDevToolPlugin({ filename: false }),
     new ForkTsCheckerWebpackPlugin(),
-    // environmental variables
     new webpack.EnvironmentPlugin(['NODE_ENV', 'TARGET_BROWSER']),
-    // delete previous build files
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: [
         path.join(process.cwd(), `extension/${targetBrowser}`),
@@ -172,24 +159,31 @@ module.exports = {
       hash: true,
       filename: 'options.html',
     }),
-    // write css file(s) to build folder
+    new HtmlWebpackPlugin({
+      template: path.join(viewsPath, 'login.html'),
+      inject: 'body',
+      chunks: ['login'],
+      hash: true,
+      filename: 'login.html',
+    }),
     new MiniCssExtractPlugin({ filename: 'css/[name].css' }),
-    // copy static assets
     new CopyWebpackPlugin({
       patterns: [{ from: 'source/assets', to: 'assets' }],
     }),
-    // plugin to enable browser reloading in development mode
     extensionReloaderPlugin,
   ],
 
   optimization: {
-    minimize: true,
+    minimize: nodeEnv === 'production',
     minimizer: [
       new TerserPlugin({
         parallel: true,
         terserOptions: {
           format: {
             comments: false,
+          },
+          compress: {
+            drop_console: false,
           },
         },
         extractComments: false,
@@ -210,5 +204,15 @@ module.exports = {
         },
       }),
     ],
+    splitChunks: {
+      cacheGroups: {
+        styles: {
+          name: 'styles',
+          test: /\.css$/,
+          chunks: 'all',
+          enforce: true,
+        },
+      },
+    },
   },
 };

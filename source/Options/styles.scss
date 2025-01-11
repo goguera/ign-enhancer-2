@@ -6,62 +6,352 @@
 }
 
 body {
-  font-family: Arial, sans-serif; /* Ensures a clean, modern font is used */
+  font-family: Arial, sans-serif;
   display: flex;
-  justify-content: center; /* Centers the form on the page */
+  justify-content: center;
   align-items: center;
-  height: 100vh; /* Uses full view height to center vertically */
-  background-color: #f4f4f9; /* A light grey background */
+  height: 100vh;
+  background-color: #f4f4f9;
 }
 
 h3 {
-  margin-bottom: 20px; /* Adds space below the header */
-  color: #333; /* Dark grey color for text */
+  margin-bottom: 20px;
+  color: #333;
 }
 
 form {
-  background: white; /* White background for the form */
+  background: white;
   padding: 20px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.2); /* Adds subtle shadow to the form */
-  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
+  border-radius: 8px;
 }
 
 table {
-  width: 100%; /* Makes the table use the full width of the form */
-  border-collapse: collapse; /* Removes space between cells */
-  margin-bottom: 20px; /* Adds space below the table */
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
 }
 
 td {
-  padding: 8px; /* Adds padding inside each table cell */
-  vertical-align: top; /* Aligns content to the top of the cell */
+  padding: 8px;
+  vertical-align: top;
 }
 
 input[type="radio"] {
-  margin-right: 5px; /* Space after radio button */
+  margin-right: 5px;
 }
 
 input[type="text"] {
-  width: 100%; /* Full width to stretch along the cell */
-  padding: 8px; /* Padding for better text visibility */
-  border: 1px solid #ccc; /* Subtle border styling */
-  border-radius: 4px; /* Rounded corners for the input field */
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+
+  &:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+  }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+  }
 }
 
 button {
-  background-color: #007BFF; /* Bootstrap primary color for consistency */
+  background-color: #007BFF;
   color: white;
   border: none;
   padding: 10px 20px;
   cursor: pointer;
   border-radius: 5px;
-  transition: background-color 0.3s; /* Smooth transition for hover effect */
+  transition: background-color 0.3s;
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  &.delete {
+    background-color: #dc3545;
+    
+    &:hover {
+      background-color: #c82333;
+    }
+  }
+
+  &.create-account {
+    background-color: #28a745;
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  &.save-account {
+    background-color: #28a745;
+    
+    &:hover {
+      background-color: #218838;
+    }
+  }
+
+  &.resync {
+    background-color: #ffc107;
+    color: #000;
+    
+    &:hover {
+      background-color: #e0a800;
+    }
+  }
 }
 
 button:hover {
-  background-color: #0056b3; /* Darker shade on hover */
+  background-color: #0056b3;
 }
 
 label {
-  cursor: pointer; /* Indicates that label is clickable */
+  cursor: pointer;
+}
+
+/* Account Manager Styles */
+.account-manager {
+  margin: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    margin: 0 0 20px;
+    color: #333;
+  }
+
+  h4 {
+    margin: 20px 0 10px;
+    color: #666;
+  }
+
+  .account-actions-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    button {
+      flex: 1;
+      
+      &.resync-profile {
+        background: #673AB7;
+        color: white;
+
+        &:hover {
+          background: #5E35B1;
+        }
+      }
+    }
+  }
+
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #e0e0e0;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.create-account {
+      background: #4CAF50;
+      color: white;
+
+      &:hover {
+        background: #45a049;
+      }
+    }
+
+    &.delete {
+      background: #ff4444;
+      color: white;
+
+      &:hover {
+        background: #cc0000;
+      }
+    }
+
+    &.resync {
+      background: #2196F3;
+      color: white;
+      margin-right: 8px;
+
+      &:hover {
+        background: #1976D2;
+      }
+    }
+  }
+
+  .accounts-list {
+    .account-item {
+      padding: 15px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+
+      &.pending {
+        background: #fff3e0;
+        border-color: #ffe0b2;
+      }
+
+      .account-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+
+        .account-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+
+        .account-details {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .account-name {
+            font-weight: 600;
+            color: #333;
+          }
+
+          .account-username {
+            color: #666;
+            font-size: 0.9em;
+          }
+
+          .account-timestamp {
+            color: #999;
+            font-size: 0.8em;
+          }
+        }
+      }
+
+      .account-actions {
+        display: flex;
+        gap: 8px;
+      }
+    }
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .modal {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+
+      h4 {
+        margin: 0 0 15px;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        font-size: 14px;
+
+        &:focus {
+          outline: none;
+          border-color: #2196F3;
+        }
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+
+        button {
+          &.save-account {
+            background: #4CAF50;
+            color: white;
+
+            &:hover {
+              background: #45a049;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  color: white;
+  font-size: 14px;
+  z-index: 1100;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  
+  &--success {
+    background: #4CAF50;
+  }
+  
+  &--error {
+    background: #f44336;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

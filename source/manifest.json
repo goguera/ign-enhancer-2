@@ -9,7 +9,21 @@
   "homepage_url": "https://github.com/goguera/ign-enhancer-2",
   "short_name": "IGN Enhancer 2",
 
-  "permissions": ["activeTab", "storage", "https://www.ignboards.com/*"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "cookies",
+    "windows",
+    "https://www.ignboards.com/*",
+    "*://*.ignboards.com/*"
+  ],
+
+  "incognito": "split",
+
+  "host_permissions": [
+    "*://*.ignboards.com/*",
+    "https://www.ignboards.com/*"
+  ],
 
   "content_security_policy": "script-src 'self'; object-src 'self'",
 

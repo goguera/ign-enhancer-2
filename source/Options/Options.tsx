@@ -3,6 +3,7 @@ import { browser } from 'webextension-polyfill-ts';
 import './styles.scss';
 import { Settings } from '../lib/types';
 import { setSettings as setExtensionSettings } from '@lib/utils/options';
+import AccountManager from './AccountManager';
 
 const defaultSettings: Settings = {
   closeTabOnPost: 'no',
@@ -60,7 +61,7 @@ const IGNEnhancerSettings: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '300px', width: '800px' }}>
+    <div style={{ width: '800px', padding: '20px' }}>
       <form onSubmit={handleSubmit}>
         <h3>IGN Enhancer - Settings</h3>
         <table>
@@ -126,6 +127,8 @@ const IGNEnhancerSettings: React.FC = () => {
         </table>
         <button type="submit">SALVAR</button>
       </form>
+
+      <AccountManager />
     </div>
   );
 };
