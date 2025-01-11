@@ -234,6 +234,22 @@ export async function switchToAccountState(accountId: string): Promise<void> {
       }
     }
 
+    // Always set the push notice dismiss cookie
+    try {
+      await browser.cookies.set({
+        url: `https://${WWW_IGNBOARDS_DOMAIN}`,
+        name: 'xf_push_notice_dismiss',
+        value: '1',
+        domain: WWW_IGNBOARDS_DOMAIN,
+        path: '/',
+        secure: true,
+        httpOnly: false,
+        sameSite: 'lax' as Cookies.SameSiteStatus
+      });
+    } catch (error) {
+      console.error('Error setting push notice dismiss cookie:', error);
+    }
+
     // If we couldn't set any cookies, throw an error
     if (cookieErrors.length === account.cookies.length) {
       throw new Error('Failed to set any cookies');

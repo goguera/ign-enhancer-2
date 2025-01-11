@@ -209,6 +209,7 @@ const AccountManager: React.FC = () => {
     }));
 
     try {
+    
       // First swap the credentials in the backend
       await switchToAccountState(accountId);
       
