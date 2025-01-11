@@ -13,6 +13,7 @@ import {
   syncCurrentUser,
   exportAccountData,
   importAccountData,
+  storeCurrentSession,
 } from '@lib/utils/account-state';
 import Toast, { ToastType } from './Toast';
 import ConfirmDialog from './ConfirmDialog';
@@ -197,6 +198,7 @@ const AccountManager: React.FC = () => {
     if (activatingAccountId) {
       return;
     }
+    // await storeCurrentSession();
 
     // Store the previous active account ID in case we need to revert
     const previousAccountId = accounts.activeAccountId;

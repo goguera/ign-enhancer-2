@@ -59,13 +59,17 @@ export async function fetchUserProfile(): Promise<UserProfile | null> {
 }
 
 export async function clearCurrentSession(): Promise<void> {
-  // Clear cookies from both domains
+  // Clear only authentication cookies from both domains
   const currentCookies = [
     ...(await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN })),
     ...(await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN }))
   ];
 
-  for (const cookie of currentCookies) {
+  const authCookies = currentCookies.filter(cookie => 
+    cookie.name === 'xf_user' || cookie.name === 'xf_session'
+  );
+
+  for (const cookie of authCookies) {
     try {
       await browser.cookies.remove({
         url: `https://${cookie.domain}${cookie.path}`,
@@ -187,17 +191,21 @@ export async function switchToAccountState(accountId: string): Promise<void> {
   }
 
   try {
-    // First get all current cookies to remove them
+    // First get all current auth cookies to remove them
     const currentCookies = await Promise.all([
       browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN }),
       browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN })
     ]).then(([cookies1, cookies2]) => [...cookies1, ...cookies2]);
 
+    const authCookies = currentCookies.filter(cookie => 
+      cookie.name === 'xf_user' || cookie.name === 'xf_session'
+    );
+
     // Clear localStorage first
     window.localStorage.clear();
 
-    // Remove all current cookies sequentially to avoid race conditions
-    for (const cookie of currentCookies) {
+    // Remove all current auth cookies sequentially to avoid race conditions
+    for (const cookie of authCookies) {
       try {
         await browser.cookies.remove({
           url: `https://${cookie.domain}${cookie.path}`,
@@ -209,9 +217,13 @@ export async function switchToAccountState(accountId: string): Promise<void> {
       }
     }
 
-    // Set new cookies sequentially
+    // Set new auth cookies sequentially
     const cookieErrors: Error[] = [];
-    for (const cookie of account.cookies) {
+    const authCookiesToSet = account.cookies.filter(cookie => 
+      cookie.name === 'xf_user' || cookie.name === 'xf_session'
+    );
+
+    for (const cookie of authCookiesToSet) {
       try {
         // Prepare cookie data
         const cookieData: Cookies.SetDetailsType = {
@@ -250,9 +262,9 @@ export async function switchToAccountState(accountId: string): Promise<void> {
       console.error('Error setting push notice dismiss cookie:', error);
     }
 
-    // If we couldn't set any cookies, throw an error
-    if (cookieErrors.length === account.cookies.length) {
-      throw new Error('Failed to set any cookies');
+    // If we couldn't set any auth cookies, throw an error
+    if (cookieErrors.length === authCookiesToSet.length) {
+      throw new Error('Failed to set any authentication cookies');
     }
 
     // Finally set localStorage
@@ -348,4 +360,35 @@ export async function importAccountData(jsonData: string): Promise<void> {
   } catch (error) {
     throw new Error('Erro ao importar dados: ' + error);
   }
+}
+
+export async function storeCurrentSession(): Promise<void> {
+  const states = await getAccountStates();
+  
+  // Check if there's an active account
+  if (!states.activeAccountId) {
+    throw new Error('No active account found');
+  }
+
+  const account = states.accounts[states.activeAccountId];
+  if (!account) {
+    throw new Error('Active account not found in storage');
+  }
+
+  // Get current cookies
+  const cookies1 = await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN });
+  const cookies2 = await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN });
+  const cookies = [...cookies1, ...cookies2];
+
+  // Get current localStorage
+  const localStorage = { ...window.localStorage };
+
+  // Update the account state
+  account.cookies = cookies;
+  account.localStorage = localStorage;
+  account.timestamp = Date.now();
+
+  // Save the updated state
+  await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
 } 
+
