@@ -1,24 +1,12 @@
 import { XhrData } from '@lib/types';
 import { xhrDataObservable } from '@lib/utils/xhr.observable';
+import { getSubmitButton } from '@lib/utils/dom';
 
 let onAntiFlood = false;
 
-function detectSubmitButton(currentUrl: string): HTMLButtonElement | null {
-  const location = currentUrl.split('/')[1].split('/')[0];
-  let button: HTMLButtonElement | undefined;
-  const allButtons = document.querySelectorAll<HTMLButtonElement>('button[type=submit]');
-  if (location === 'conversations' || location === 'threads') {
-    button = allButtons[4];
-    if (location === 'threads' && button.classList.contains('button--icon--vote')) {
-      button = allButtons[5];
-    }
-  } else {
-    return null;
-  }
-  return button ?? null;
-}
 
-function detectAntiFloodTime(errorMessage: string): number {
+
+function parseAntiFloodTime(errorMessage: string): number {
   return parseInt(errorMessage.split('at least ')[1].split(' seconds')[0], 10);
 }
 
@@ -59,12 +47,12 @@ function startAutoFlood(xhrData: any, errorMessage: string): void {
     return;
   }
   onAntiFlood = true;
-  const replyButton = detectSubmitButton(xhrData.url);
+  const replyButton = getSubmitButton(xhrData.url);
   if (replyButton === null) {
     onAntiFlood = false;
     return;
   }
-  const antiFloodTime = detectAntiFloodTime(errorMessage);
+  const antiFloodTime = parseAntiFloodTime(errorMessage);
   closeAntiFloodMessage();
   replyButton.style.pointerEvents = 'none';
   startAntiFloodCountdown(antiFloodTime, replyButton);
@@ -72,9 +60,9 @@ function startAutoFlood(xhrData: any, errorMessage: string): void {
 
 function xhrCallback(data: { xhrData: XhrData }): void {
   if (data.xhrData.status === 'error') {
-    const stringToCheck = 'must wait at least';
-    const includesTheString = data.xhrData.errors?.some((error) => error.includes(stringToCheck));
-    if (includesTheString) {
+    const errorMessage = 'must wait at least';
+    const isMatch = data.xhrData.errors?.some((error) => error.includes(errorMessage));
+    if (isMatch) {
       startAutoFlood(data.xhrData, data.xhrData.errors!.join(' '));
     }
   }

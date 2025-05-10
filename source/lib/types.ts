@@ -1,10 +1,14 @@
 import { Cookies } from 'webextension-polyfill-ts';
 
+export type XhrEvent = { data: XhrData }
+
 export interface XhrData {
   status: string;
   url: string;
   html?: string;
   errors?: string[];
+  requestCookies?: Record<string, string>;
+  responseCookies?: Record<string, string>;
 }
 
 export type BooleanString = 'yes' | 'no';
@@ -13,6 +17,7 @@ export type Settings = {
   closeTabOnPost: BooleanString;
   timeToClose: string;
   maxNumberOfVisibleThreadsBeforeHalt: string;
+  showQueuePopover: BooleanString;
 };
 
 export type SettingsItem = keyof Settings;

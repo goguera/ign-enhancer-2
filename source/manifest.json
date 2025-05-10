@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "IGN Enhancer 2",
-  "version": "0.0.0",
+  "version": "0.0.8",
   "icons": {
     "48": "assets/icons/logo.png"
   },
@@ -67,8 +67,21 @@
       "js": ["js/contentScriptThreads.bundle.js"]
     },
     {
+      "matches": ["*://ignboards.com/*", "*://www.ignboards.com/*"],
+      "js": ["js/queuePopover.bundle.js"]
+    },
+    {
       "matches": ["*://ignboards.com/forums/*", "*://www.ignboards.com/forums/*"],
       "js": ["js/contentScriptForums.bundle.js"]
+    },
+    {
+      "matches": [
+        "*://ignboards.com/threads/*", 
+        "*://www.ignboards.com/threads/*", 
+        "*://ignboards.com/conversations/*", 
+        "*://www.ignboards.com/conversations/*"
+      ],
+      "js": ["js/threadPostInterceptor.bundle.js"]
     }
   ]
 }

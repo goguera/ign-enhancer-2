@@ -24,7 +24,10 @@ const extensionReloaderPlugin =
         port: 9090,
         reloadPage: true,
         entries: {
-          contentScript: 'contentScript',
+          contentScript: [
+            'contentScriptThreads', 
+            'contentScriptForums', 
+          ],
           background: 'background',
           extensionPage: ['options', 'login'],
         },
