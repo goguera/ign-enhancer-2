@@ -64,11 +64,16 @@ module.exports = {
     contentScriptForums: path.join(sourcePath, 'ContentScript', 'forums.ts'),
     options: path.join(sourcePath, 'Options', 'index.tsx'),
     login: path.join(sourcePath, 'Login', 'index.tsx'),
+    injection: path.join(sourcePath, 'Injections', 'injection.ts'),
   },
 
   output: {
     path: path.join(destPath, targetBrowser),
-    filename: 'js/[name].bundle.js',
+    filename: (pathData) => {
+      return pathData.chunk.name === 'injection' 
+        ? 'assets/js/[name].js'
+        : 'js/[name].bundle.js';
+    },
   },
 
   resolve: {
