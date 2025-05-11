@@ -4,14 +4,13 @@ import './styles.scss';
 import { Settings, BooleanString } from '../lib/types';
 import { setSettings as setExtensionSettings } from '@lib/utils/options';
 import AccountManager from './AccountManager';
-import MessageQueueManager from './MessageQueueManager';
 import DebugLogger from './DebugLogger';
 
 const defaultSettings: Settings = {
   closeTabOnPost: 'no',
   timeToClose: '10',
-  maxNumberOfVisibleThreadsBeforeHalt: '200',
-  showQueuePopover: 'yes',
+  maxNumberOfVisibleThreadsBeforeHalt: '20',
+  enableQuickFlood: 'yes',
 };
 
 const IGNEnhancerSettings: React.FC = () => {
@@ -21,13 +20,18 @@ const IGNEnhancerSettings: React.FC = () => {
     const restoreOptions = async () => {
       try {
         // Replace browser.storage.local.get with your storage retrieval method
-        const result = await browser.storage.local.get(['closeTabOnPost', 'timeToClose', 'maxNumberOfVisibleThreadsBeforeHalt', 'showQueuePopover']);
+        const result = await browser.storage.local.get([
+          'closeTabOnPost', 
+          'timeToClose', 
+          'maxNumberOfVisibleThreadsBeforeHalt',
+          'enableQuickFlood'
+        ]);
         if (Object.keys(result).length !== 0) {
           setSettings({
             closeTabOnPost: result.closeTabOnPost || 'no',
             timeToClose: result.timeToClose || '10',
             maxNumberOfVisibleThreadsBeforeHalt: result.maxNumberOfVisibleThreadsBeforeHalt || '200',
-            showQueuePopover: result.showQueuePopover || 'yes',
+            enableQuickFlood: result.enableQuickFlood || 'yes',
           });
         }
       } catch (error) {
@@ -63,7 +67,7 @@ const IGNEnhancerSettings: React.FC = () => {
       closeTabOnPost: settings.closeTabOnPost,
       timeToClose: settings.timeToClose || '10',
       maxNumberOfVisibleThreadsBeforeHalt: settings.maxNumberOfVisibleThreadsBeforeHalt || '200',
-      showQueuePopover: settings.showQueuePopover,
+      enableQuickFlood: settings.enableQuickFlood || 'yes',
     }).then(() => window.close());
   };
 
@@ -111,7 +115,7 @@ const IGNEnhancerSettings: React.FC = () => {
                 />
               </div>
 
-              <div className="setting">
+              {/* <div className="setting">
                 <label htmlFor="max-number-of-visible-threads-before-halt">
                   Número máximo de tópicos visíveis antes de esconder
                 </label>
@@ -124,14 +128,14 @@ const IGNEnhancerSettings: React.FC = () => {
                   min="5"
                   max="100"
                 />
-              </div>
+              </div> */}
               
               <div className="setting">
-                <label htmlFor="show-queue-popover">Mostrar fila de mensagens nas páginas do fórum?</label>
+                <label htmlFor="enable-quick-flood">Habilitar Quick Flood</label>
                 <select
-                  id="show-queue-popover"
-                  name="showQueuePopover"
-                  value={settings.showQueuePopover || 'yes'}
+                  id="enable-quick-flood"
+                  name="enableQuickFlood"
+                  value={settings.enableQuickFlood || 'yes'}
                   onChange={handleInputChange}
                 >
                   <option value="yes">Sim</option>
@@ -150,9 +154,6 @@ const IGNEnhancerSettings: React.FC = () => {
 
         {/* Account Manager Section */}
         <AccountManager />
-        
-        {/* Message Queue Manager Section */}
-        <MessageQueueManager />
         
         {/* Debug Logger Section */}
         <DebugLogger />

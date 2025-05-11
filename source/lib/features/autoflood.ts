@@ -71,6 +71,7 @@ function xhrCallback(data: { xhrData: XhrData }): void {
 
 export function initAutoFlood(): void {
   xhrDataObservable.subscribe(data => {
+    console.log('autoflood emitted');
     xhrCallback({ xhrData: data });
   });
 }

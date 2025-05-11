@@ -17,7 +17,7 @@ export type Settings = {
   closeTabOnPost: BooleanString;
   timeToClose: string;
   maxNumberOfVisibleThreadsBeforeHalt: string;
-  showQueuePopover: BooleanString;
+  enableQuickFlood: BooleanString;
 };
 
 export type SettingsItem = keyof Settings;
@@ -43,6 +43,7 @@ export interface AccountState {
   name: string;
   cookies: Cookies.Cookie[];
   localStorage: Record<string, string>;
+  sessionStorage: Record<string, string>;
   timestamp: number;
   status: AccountStatus;
   isResyncing?: boolean;

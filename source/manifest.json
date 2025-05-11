@@ -21,10 +21,7 @@
 
   "incognito": "split",
 
-  "host_permissions": [
-    "*://*.ignboards.com/*",
-    "https://www.ignboards.com/*"
-  ],
+  "host_permissions": ["*://*.ignboards.com/*", "https://www.ignboards.com/*"],
 
   "content_security_policy": "script-src 'self'; object-src 'self'",
 
@@ -44,7 +41,7 @@
 
   "browser_action": {
     "default_icon": {
-       "48": "assets/icons/logo.png"
+      "48": "assets/icons/logo.png"
     },
     "default_title": "IGN Enhancer 2"
   },
@@ -64,24 +61,12 @@
   "content_scripts": [
     {
       "matches": ["*://ignboards.com/*", "*://www.ignboards.com/*"],
-      "js": ["js/contentScriptThreads.bundle.js"]
-    },
-    {
-      "matches": ["*://ignboards.com/*", "*://www.ignboards.com/*"],
-      "js": ["js/queuePopover.bundle.js"]
+      "js": ["js/contentScriptThreads.bundle.js"],
+      "all_frames": true
     },
     {
       "matches": ["*://ignboards.com/forums/*", "*://www.ignboards.com/forums/*"],
       "js": ["js/contentScriptForums.bundle.js"]
-    },
-    {
-      "matches": [
-        "*://ignboards.com/threads/*", 
-        "*://www.ignboards.com/threads/*", 
-        "*://ignboards.com/conversations/*", 
-        "*://www.ignboards.com/conversations/*"
-      ],
-      "js": ["js/threadPostInterceptor.bundle.js"]
     }
   ]
 }

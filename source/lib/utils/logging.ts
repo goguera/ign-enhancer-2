@@ -190,8 +190,8 @@ export const logger = {
   warning: (source: string, message: string, data?: any) => 
     addLog(LogLevel.WARNING, source, message, data),
   
-  error: (source: string, message: string, data?: any) => 
-    addLog(LogLevel.ERROR, source, message, data),
+  error: (source: string, message: string | unknown, data?: any) => 
+    addLog(LogLevel.ERROR, source, String(message), data),
     
   network: (source: string, method: string, url: string, request?: any, response?: any) => {
     // Create a network log entry with complete request/response details

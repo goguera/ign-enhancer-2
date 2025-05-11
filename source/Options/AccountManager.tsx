@@ -776,7 +776,7 @@ const AccountManager: React.FC = () => {
                     <span className="account-username">@{account.profile.username}</span>
                   )}
                   <span className="account-timestamp">
-                    {new Date(account.timestamp).toLocaleString()}
+                    Última atualização: {new Date(account.timestamp).toLocaleString()}
                   </span>
                 </div>
               </div>

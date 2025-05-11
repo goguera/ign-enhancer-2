@@ -169,30 +169,58 @@ export async function updateCookiesFromResponse(response: Response): Promise<voi
  * Clear the current session by removing auth cookies
  */
 export async function clearCurrentSession(): Promise<void> {
-  // Clear authentication cookies from both domains
-  const currentCookies = [
-    ...(await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN })),
-    ...(await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN }))
-  ];
+  logger.info(LOG_SOURCE, 'Clearing current browser session');
+  
+  try {
+    // Clear authentication cookies from both domains
+    const currentCookies = [
+      ...(await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN })),
+      ...(await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN }))
+    ];
 
-  // Filter for ALL essential cookies, not just xf_user and xf_session
-  const authCookies = currentCookies.filter(cookie => 
-    ESSENTIAL_COOKIES.includes(cookie.name)
-  );
+    // Filter for ALL essential cookies, not just xf_user and xf_session
+    const authCookies = currentCookies.filter(cookie => 
+      ESSENTIAL_COOKIES.includes(cookie.name)
+    );
+    
+    logger.debug(LOG_SOURCE, 'Removing authentication cookies', {
+      totalCookies: currentCookies.length,
+      authCookiesToRemove: authCookies.length,
+      cookieNames: authCookies.map(c => c.name)
+    });
 
-  for (const cookie of authCookies) {
-    try {
-      await browser.cookies.remove({
-        url: `https://${cookie.domain}${cookie.path}`,
-        name: cookie.name
-      });
-    } catch (error) {
-      console.error('Error removing cookie:', error);
+    for (const cookie of authCookies) {
+      try {
+        await browser.cookies.remove({
+          url: `https://${cookie.domain}${cookie.path}`,
+          name: cookie.name
+        });
+      } catch (error) {
+        logger.error(LOG_SOURCE, `Error removing cookie: ${cookie.name}`, {
+          cookie: cookie.name,
+          domain: cookie.domain,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
     }
-  }
 
-  // Clear localStorage
-  window.localStorage.clear();
+    // Log storage state before clearing
+    logger.debug(LOG_SOURCE, 'Clearing storage', {
+      localStorageItemCount: Object.keys(window.localStorage).length,
+      sessionStorageItemCount: Object.keys(window.sessionStorage).length
+    });
+    
+    // Clear localStorage and sessionStorage
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    
+    logger.info(LOG_SOURCE, 'Session cleared successfully');
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'Error clearing session', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw error;
+  }
 }
 
 export async function createPendingAccount(name: string): Promise<void> {
@@ -209,6 +237,7 @@ export async function createPendingAccount(name: string): Promise<void> {
     name,
     cookies: [],
     localStorage: {},
+    sessionStorage: {},
     timestamp: Date.now(),
     status: 'pending'
   };
@@ -240,6 +269,7 @@ export async function getCurrentAccountState(): Promise<AccountState> {
 
   const cookies = [...cookies1, ...cookies2];
   const localStorage = { ...window.localStorage };
+  const sessionStorage = { ...window.sessionStorage };
   const timestamp = Date.now();
 
   // Fetch user profile data first
@@ -257,6 +287,7 @@ export async function getCurrentAccountState(): Promise<AccountState> {
     name,
     cookies,
     localStorage,
+    sessionStorage,
     timestamp,
     status: 'pending',
     profile
@@ -301,6 +332,12 @@ export async function switchToAccountState(accountId: string): Promise<void> {
     throw new Error('Account not found');
   }
 
+  logger.info(LOG_SOURCE, `Switching to account: ${account.name}`, {
+    accountId,
+    accountName: account.name,
+    profileUsername: account.profile?.username
+  });
+
   try {
     // First get all current auth cookies to remove them
     const currentCookies = await Promise.all([
@@ -313,8 +350,19 @@ export async function switchToAccountState(accountId: string): Promise<void> {
       ESSENTIAL_COOKIES.includes(cookie.name)
     );
 
-    // Clear localStorage first
+    // Log the state before clearing
+    logger.debug(LOG_SOURCE, 'Current browser state before switching', {
+      cookiesCount: currentCookies.length,
+      essentialCookiesCount: authCookies.length,
+      localStorageItemCount: Object.keys(window.localStorage).length,
+      sessionStorageItemCount: Object.keys(window.sessionStorage).length
+    });
+
+    // Clear localStorage and sessionStorage first
     window.localStorage.clear();
+    window.sessionStorage.clear();
+
+    logger.debug(LOG_SOURCE, 'Storage cleared');
 
     // Remove all current auth cookies sequentially to avoid race conditions
     for (const cookie of authCookies) {
@@ -324,10 +372,16 @@ export async function switchToAccountState(accountId: string): Promise<void> {
           name: cookie.name
         });
       } catch (error) {
-        console.error('Error removing cookie:', error);
+        logger.error(LOG_SOURCE, `Error removing cookie: ${cookie.name}`, {
+          cookie: cookie.name,
+          domain: cookie.domain,
+          error: error instanceof Error ? error.message : String(error)
+        });
         // Continue with other cookies even if one fails
       }
     }
+
+    logger.debug(LOG_SOURCE, 'All cookies removed');
 
     // Set new auth cookies sequentially
     const cookieErrors: Error[] = [];
@@ -335,6 +389,10 @@ export async function switchToAccountState(accountId: string): Promise<void> {
     const cookiesToSet = account.cookies.filter(cookie => 
       ESSENTIAL_COOKIES.includes(cookie.name)
     );
+
+    logger.debug(LOG_SOURCE, `Setting ${cookiesToSet.length} essential cookies`, {
+      cookieNames: cookiesToSet.map(c => c.name)
+    });
 
     for (const cookie of cookiesToSet) {
       try {
@@ -354,7 +412,11 @@ export async function switchToAccountState(accountId: string): Promise<void> {
 
         await browser.cookies.set(cookieData);
       } catch (error) {
-        console.error('Error setting cookie:', error);
+        logger.error(LOG_SOURCE, `Error setting cookie: ${cookie.name}`, {
+          cookie: cookie.name,
+          domain: cookie.domain,
+          error: error instanceof Error ? error.message : String(error)
+        });
         cookieErrors.push(error as Error);
       }
     }
@@ -371,8 +433,11 @@ export async function switchToAccountState(accountId: string): Promise<void> {
         httpOnly: false,
         sameSite: 'lax' as Cookies.SameSiteStatus
       });
+      logger.debug(LOG_SOURCE, 'Push notice dismiss cookie set');
     } catch (error) {
-      console.error('Error setting push notice dismiss cookie:', error);
+      logger.error(LOG_SOURCE, 'Error setting push notice dismiss cookie', {
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
 
     // If we couldn't set any essential cookies, throw an error
@@ -380,16 +445,41 @@ export async function switchToAccountState(accountId: string): Promise<void> {
       throw new Error('Failed to set any authentication cookies');
     }
 
-    // Finally set localStorage
+    // Set localStorage
+    const localStorageCount = Object.keys(account.localStorage).length;
+    logger.debug(LOG_SOURCE, `Setting ${localStorageCount} localStorage items`);
+    
     for (const [key, value] of Object.entries(account.localStorage)) {
       window.localStorage.setItem(key, value);
     }
+
+    // Set sessionStorage
+    const sessionStorageCount = Object.keys(account.sessionStorage).length;
+    logger.debug(LOG_SOURCE, `Setting ${sessionStorageCount} sessionStorage items`);
+    
+    for (const [key, value] of Object.entries(account.sessionStorage)) {
+      window.sessionStorage.setItem(key, value);
+    }
+    
+    // Log the browser state after restoration
+    logger.debug(LOG_SOURCE, 'Browser state after restoration', {
+      localStorageItemCount: Object.keys(window.localStorage).length,
+      sessionStorageItemCount: Object.keys(window.sessionStorage).length
+    });
     
     // Update active account ID in states
     states.activeAccountId = accountId;
     await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
+    
+    logger.info(LOG_SOURCE, 'Account switch completed successfully', {
+      accountId,
+      accountName: account.name
+    });
   } catch (error) {
     // If anything fails, clear everything to prevent partial state
+    logger.error(LOG_SOURCE, 'Account switch failed, clearing session', {
+      error: error instanceof Error ? error.message : String(error)
+    });
     await clearCurrentSession();
     throw error;
   }
@@ -484,30 +574,62 @@ export async function storeCurrentSession(): Promise<void> {
   
   // Check if there's an active account
   if (!states.activeAccountId) {
-    console.log('No active account to store - skipping session storage');
+    logger.warning(LOG_SOURCE, 'No active account to store - skipping session storage');
     return; // Just return without error if there's no active account
   }
 
   const account = states.accounts[states.activeAccountId];
   if (!account) {
+    logger.error(LOG_SOURCE, 'Active account not found in storage', {
+      activeAccountId: states.activeAccountId
+    });
     throw new Error('Active account not found in storage');
   }
 
-  // Get current cookies
-  const cookies1 = await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN });
-  const cookies2 = await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN });
-  const cookies = [...cookies1, ...cookies2];
+  logger.info(LOG_SOURCE, `Storing current session for account: ${account.name}`, {
+    accountId: account.id,
+    accountName: account.name,
+    profileUsername: account.profile?.username
+  });
 
-  // Get current localStorage
-  const localStorage = { ...window.localStorage };
+  try {
+    // Get current cookies
+    const cookies1 = await browser.cookies.getAll({ domain: IGNBOARDS_DOMAIN });
+    const cookies2 = await browser.cookies.getAll({ domain: WWW_IGNBOARDS_DOMAIN });
+    const cookies = [...cookies1, ...cookies2];
 
-  // Update the account state
-  account.cookies = cookies;
-  account.localStorage = localStorage;
-  account.timestamp = Date.now();
+    // Get current localStorage and sessionStorage
+    const localStorage = { ...window.localStorage };
+    const sessionStorage = { ...window.sessionStorage };
+    
+    // Log about what we're storing
+    logger.debug(LOG_SOURCE, 'Storing browser state', {
+      cookiesCount: cookies.length,
+      essentialCookiesCount: cookies.filter(c => ESSENTIAL_COOKIES.includes(c.name)).length,
+      localStorageItemCount: Object.keys(localStorage).length,
+      sessionStorageItemCount: Object.keys(sessionStorage).length
+    });
 
-  // Save the updated state
-  await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
+    // Update the account state
+    account.cookies = cookies;
+    account.localStorage = localStorage;
+    account.sessionStorage = sessionStorage;
+    account.timestamp = Date.now();
+
+    // Save the updated state
+    await browser.storage.local.set({ [ACCOUNT_STATES_KEY]: states });
+    
+    logger.info(LOG_SOURCE, 'Session stored successfully', {
+      accountId: account.id,
+      timestamp: new Date(account.timestamp).toISOString()
+    });
+  } catch (error) {
+    logger.error(LOG_SOURCE, 'Failed to store current session', {
+      error: error instanceof Error ? error.message : String(error),
+      accountId: account.id
+    });
+    throw error;
+  }
 }
 
 /**
@@ -657,6 +779,15 @@ export async function sendForumPostWithStoredCookies(
       headerLength: cookieHeader.length
     });
     
+    // Add additional debug logging
+    logger.debug(LOG_SOURCE, `Using accountId for posting: ${accountId}`, {
+      activeAccountId: states.activeAccountId,
+      usingActiveAccount: states.activeAccountId === accountId,
+      essentialCookies: account.cookies
+        .filter(c => ESSENTIAL_COOKIES.includes(c.name))
+        .map(c => ({ name: c.name, value: c.value.substring(0, 10) + '...' }))
+    });
+    
     // 1. First, fetch the page to get the correct CSRF token
     logger.info(LOG_SOURCE, `Fetching page to extract CSRF token`);
     const pageResponse = await fetch(threadUrl, {
@@ -667,7 +798,8 @@ export async function sendForumPostWithStoredCookies(
         'Accept': 'text/html,application/xhtml+xml,application/xml',
         'Referer': origin,
         'Origin': origin
-      }
+      },
+      credentials: 'omit'
     });
     
     if (!pageResponse.ok) {
@@ -786,7 +918,8 @@ async function makePostRequest(
       'Referer': referer,
       'X-Requested-With': 'XMLHttpRequest',
       'Accept': 'application/json, text/javascript, */*; q=0.01'
-    }
+    },
+    credentials: 'omit'
   });
   
   // Log response details
@@ -907,8 +1040,9 @@ export async function clearBrowserData(): Promise<void> {
       }
     }
     
-    // Clear localStorage
+    // Clear localStorage and sessionStorage
     window.localStorage.clear();
+    window.sessionStorage.clear();
     
     console.log('IGN browser data cleared successfully');
   } catch (error) {
