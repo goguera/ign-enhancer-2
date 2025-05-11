@@ -15,7 +15,7 @@ import {
   importAccountData,
   storeCurrentSession,
   clearBrowserData,
-  ESSENTIAL_COOKIES
+  ESSENTIAL_COOKIES,
 } from '@lib/utils/account-state';
 import Toast, { ToastType } from './Toast';
 import ConfirmDialog from './ConfirmDialog';
@@ -46,9 +46,9 @@ const AccountManager: React.FC = () => {
     message: '',
     onConfirm: () => {},
   });
-  const [currentUser, setCurrentUser] = useState<{ loggedIn: boolean; synced: boolean }>({ 
-    loggedIn: false, 
-    synced: false 
+  const [currentUser, setCurrentUser] = useState<{ loggedIn: boolean; synced: boolean }>({
+    loggedIn: false,
+    synced: false,
   });
 
   useEffect(() => {
@@ -79,7 +79,7 @@ const AccountManager: React.FC = () => {
   };
 
   const hideConfirm = () => {
-    setConfirm(prev => ({ ...prev, isOpen: false }));
+    setConfirm((prev) => ({ ...prev, isOpen: false }));
   };
 
   const loadAccounts = async () => {
@@ -95,11 +95,11 @@ const AccountManager: React.FC = () => {
   const checkCurrentUserStatus = async () => {
     try {
       const { profile, existingAccount } = await checkCurrentUser();
-      
+
       // If we're not logged in but there's an active account, attempt to restore it
       if (!profile && accounts.activeAccountId) {
         const activeAccount = accounts.accounts[accounts.activeAccountId];
-        
+
         if (activeAccount) {
           // Attempt auto-recovery after extension reload or permissions reset
           console.log('No active user detected with active account set - attempting recovery');
@@ -107,18 +107,18 @@ const AccountManager: React.FC = () => {
           return; // Don't update UI state yet, wait for recovery attempt
         }
       }
-      
+
       setCurrentUser({
         loggedIn: !!profile,
-        synced: !!existingAccount && existingAccount.id === accounts.activeAccountId
+        synced: !!existingAccount && existingAccount.id === accounts.activeAccountId,
       });
 
       // If we have a profile but it doesn't match the active account,
       // update the active account accordingly
       if (profile && existingAccount && existingAccount.id !== accounts.activeAccountId) {
-        setAccounts(prev => ({
+        setAccounts((prev) => ({
           ...prev,
-          activeAccountId: existingAccount.id
+          activeAccountId: existingAccount.id,
         }));
       }
     } catch (error) {
@@ -132,28 +132,28 @@ const AccountManager: React.FC = () => {
     try {
       console.log(`Attempting to recover account ${accountId}`);
       setLoading(true);
-      
+
       // Attempt to reapply the cookies from storage
       await switchToAccountState(accountId);
-      
+
       // Allow time for cookies to be set
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       // Verify if the recovery was successful
       const { profile } = await checkCurrentUser();
-      
+
       if (profile) {
         console.log('Account recovery successful');
         setCurrentUser({
           loggedIn: true,
-          synced: true
+          synced: true,
         });
         showToast('Sessão recuperada com sucesso', 'success');
       } else {
         console.log('Account recovery failed - need to relogin');
         setCurrentUser({
           loggedIn: false,
-          synced: false
+          synced: false,
         });
         showToast('Sessão expirada - faça login novamente', 'warning');
       }
@@ -161,7 +161,7 @@ const AccountManager: React.FC = () => {
       console.error('Account recovery failed:', error);
       setCurrentUser({
         loggedIn: false,
-        synced: false
+        synced: false,
       });
     } finally {
       setLoading(false);
@@ -177,7 +177,7 @@ const AccountManager: React.FC = () => {
         console.error('Failed to store current session:', error);
         // Continue with sync even if store fails
       }
-      
+
       await syncCurrentUser();
       await loadAccounts();
       await checkCurrentUserStatus();
@@ -199,7 +199,7 @@ const AccountManager: React.FC = () => {
         console.error('Failed to store current session:', error);
         // Continue with creating a new session even if store fails
       }
-      
+
       // Clear current session data
       await clearCurrentSession();
 
@@ -208,7 +208,7 @@ const AccountManager: React.FC = () => {
         url: 'https://www.ignboards.com/login',
         type: 'popup',
         width: 1024,
-        height: 768
+        height: 768,
       });
 
       // Set a timeout to check if the login was successful
@@ -288,7 +288,7 @@ const AccountManager: React.FC = () => {
             console.error('Failed to store current session:', error);
             // Continue with resync even if store fails
           }
-          
+
           await startResyncing(accountId);
           await clearCurrentSession();
 
@@ -296,7 +296,7 @@ const AccountManager: React.FC = () => {
             url: 'https://www.ignboards.com/login',
             type: 'popup',
             width: 1024,
-            height: 768
+            height: 768,
           });
 
           // Set a timeout similar to handleStartNewSession
@@ -341,7 +341,7 @@ const AccountManager: React.FC = () => {
           setLoading(false);
         }
         hideConfirm();
-      }
+      },
     );
   };
 
@@ -350,7 +350,7 @@ const AccountManager: React.FC = () => {
     if (activatingAccountId || loading) {
       return;
     }
-    
+
     // Store the current session state before switching
     try {
       await storeCurrentSession();
@@ -366,7 +366,7 @@ const AccountManager: React.FC = () => {
     try {
       const allCookies = await Promise.all([
         browser.cookies.getAll({ domain: 'ignboards.com' }),
-        browser.cookies.getAll({ domain: 'www.ignboards.com' })
+        browser.cookies.getAll({ domain: 'www.ignboards.com' }),
       ]);
       previousCookies = [...allCookies[0], ...allCookies[1]];
     } catch (error) {
@@ -381,29 +381,29 @@ const AccountManager: React.FC = () => {
     try {
       // First swap the credentials in the backend
       await switchToAccountState(accountId);
-      
+
       // Longer delay to allow cookies to properly set (increased from 1000ms to 1500ms)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       // Try multiple times to verify login
       let profile = null;
       let tryCount = 0;
       const maxTries = 2;
-      
+
       while (!profile && tryCount < maxTries) {
         tryCount++;
         console.log(`Verifying login, attempt ${tryCount}`);
-        
+
         // Then check who's actually logged in and verify it matches
         const userCheck = await checkCurrentUser();
         profile = userCheck.profile;
-        
+
         if (!profile && tryCount < maxTries) {
           // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
-      
+
       if (!profile) {
         throw new Error('Failed to verify logged in user after switch');
       }
@@ -413,39 +413,39 @@ const AccountManager: React.FC = () => {
       if (targetAccount.profile?.userId !== profile.userId) {
         throw new Error('Logged in user does not match target account');
       }
-      
+
       // Update account state in storage
-      setAccounts(prev => ({
+      setAccounts((prev) => ({
         ...prev,
-        activeAccountId: accountId
+        activeAccountId: accountId,
       }));
-      
+
       // Update UI state
       setCurrentUser({
         loggedIn: true,
-        synced: true
+        synced: true,
       });
-      
+
       showToast('Conta trocada com sucesso!', 'success');
       switchSuccessful = true;
     } catch (error) {
       console.error('Account switch failed:', error);
       showToast('Erro ao trocar de conta: ' + error, 'error');
-      
+
       // Attempt to recover by switching back to the previous account
       if (previousAccountId) {
         try {
           console.log('Attempting to recover to previous account:', previousAccountId);
-          
+
           // Clear all current cookies first to avoid conflicts
           await clearCurrentSession();
-          
+
           // If we have previous cookies, restore them directly
           if (previousCookies.length > 0) {
-            const essentialCookies = previousCookies.filter(cookie => 
-              ESSENTIAL_COOKIES.includes(cookie.name)
+            const essentialCookies = previousCookies.filter((cookie) =>
+              ESSENTIAL_COOKIES.includes(cookie.name),
             );
-            
+
             if (essentialCookies.length > 0) {
               for (const cookie of essentialCookies) {
                 try {
@@ -460,7 +460,7 @@ const AccountManager: React.FC = () => {
                     httpOnly: cookie.httpOnly,
                     sameSite: cookie.sameSite as Cookies.SameSiteStatus,
                     storeId: cookie.storeId,
-                    expirationDate: cookie.expirationDate
+                    expirationDate: cookie.expirationDate,
                   };
 
                   await browser.cookies.set(cookieData);
@@ -468,45 +468,45 @@ const AccountManager: React.FC = () => {
                   console.error('Error restoring cookie:', cookieError);
                 }
               }
-              
+
               // Allow time for cookies to be set
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+
               // Verify the recovery worked
               const { profile } = await checkCurrentUser();
               if (profile) {
                 // Recovery successful, update UI
-                setAccounts(prev => ({
+                setAccounts((prev) => ({
                   ...prev,
-                  activeAccountId: previousAccountId
+                  activeAccountId: previousAccountId,
                 }));
-                
+
                 setCurrentUser({
                   loggedIn: true,
-                  synced: true
+                  synced: true,
                 });
-                
+
                 showToast('Recuperado para a conta anterior', 'warning');
               } else {
                 // Direct cookie recovery failed, try account state switch
                 await switchToAccountState(previousAccountId);
-                
+
                 // Allow more time for cookies to be set
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+
                 // Verify one more time
                 const { profile } = await checkCurrentUser();
                 if (profile) {
-                  setAccounts(prev => ({
+                  setAccounts((prev) => ({
                     ...prev,
-                    activeAccountId: previousAccountId
+                    activeAccountId: previousAccountId,
                   }));
-                  
+
                   setCurrentUser({
                     loggedIn: true,
-                    synced: true
+                    synced: true,
                   });
-                  
+
                   showToast('Recuperado para a conta anterior', 'warning');
                 } else {
                   throw new Error('Recovery failed - could not restore previous session');
@@ -518,21 +518,21 @@ const AccountManager: React.FC = () => {
           } else {
             // Try normal account state switch as fallback
             await switchToAccountState(previousAccountId);
-            
+
             // Check if recovery was successful
             const { profile } = await checkCurrentUser();
             if (profile) {
               // Recovery successful, update UI
-              setAccounts(prev => ({
+              setAccounts((prev) => ({
                 ...prev,
-                activeAccountId: previousAccountId
+                activeAccountId: previousAccountId,
               }));
-              
+
               setCurrentUser({
                 loggedIn: true,
-                synced: true
+                synced: true,
               });
-              
+
               showToast('Recuperado para a conta anterior', 'warning');
             } else {
               throw new Error('Recovery failed - could not restore previous session');
@@ -544,7 +544,7 @@ const AccountManager: React.FC = () => {
           await clearCurrentSession();
           setCurrentUser({
             loggedIn: false,
-            synced: false
+            synced: false,
           });
           showToast('Erro na recuperação: ' + recoveryError, 'error');
         }
@@ -553,7 +553,7 @@ const AccountManager: React.FC = () => {
         await clearCurrentSession();
         setCurrentUser({
           loggedIn: false,
-          synced: false
+          synced: false,
         });
       }
     } finally {
@@ -564,36 +564,32 @@ const AccountManager: React.FC = () => {
         // Double check current user status
         await checkCurrentUserStatus();
       }
-      
+
       setActivatingAccountId(null);
       setLoading(false);
     }
   };
 
   const handleDeleteAccount = async (accountId: string) => {
-    showConfirm(
-      'Deletar Conta',
-      'Tem certeza que deseja deletar esta conta?',
-      async () => {
-        setLoading(true);
-        try {
-          // If we're deleting the active account, store the session first
-          if (accountId === accounts.activeAccountId) {
-            await storeCurrentSession();
-          }
-          
-          await deleteAccountState(accountId);
-          await loadAccounts();
-          await checkCurrentUserStatus();
-          showToast('Conta deletada com sucesso!', 'success');
-        } catch (error) {
-          showToast('Erro ao deletar conta: ' + error, 'error');
-        } finally {
-          setLoading(false);
-          hideConfirm();
+    showConfirm('Deletar Conta', 'Tem certeza que deseja deletar esta conta?', async () => {
+      setLoading(true);
+      try {
+        // If we're deleting the active account, store the session first
+        if (accountId === accounts.activeAccountId) {
+          await storeCurrentSession();
         }
+
+        await deleteAccountState(accountId);
+        await loadAccounts();
+        await checkCurrentUserStatus();
+        showToast('Conta deletada com sucesso!', 'success');
+      } catch (error) {
+        showToast('Erro ao deletar conta: ' + error, 'error');
+      } finally {
+        setLoading(false);
+        hideConfirm();
       }
-    );
+    });
   };
 
   const isAccountInErrorState = (accountId: string) => {
@@ -608,9 +604,9 @@ const AccountManager: React.FC = () => {
     try {
       // Store current session before exporting
       await storeCurrentSession();
-      
+
       const data = await exportAccountData();
-      
+
       // Create blob and download link
       const blob = new Blob([data], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -621,7 +617,7 @@ const AccountManager: React.FC = () => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      
+
       showToast('Backup exportado com sucesso!', 'success');
     } catch (error) {
       showToast('Erro ao exportar backup: ' + error, 'error');
@@ -636,7 +632,7 @@ const AccountManager: React.FC = () => {
     reader.onload = async (e) => {
       try {
         const jsonData = e.target?.result as string;
-        
+
         // Try to store current session before importing, but don't fail if it doesn't exist
         try {
           await storeCurrentSession();
@@ -644,7 +640,7 @@ const AccountManager: React.FC = () => {
           console.error('Failed to store current session:', error);
           // Continue with import even if store fails
         }
-        
+
         await importAccountData(jsonData);
         await loadAccounts();
         await checkCurrentUserStatus();
@@ -654,7 +650,7 @@ const AccountManager: React.FC = () => {
       }
     };
     reader.readAsText(file);
-    
+
     // Clear the input so the same file can be selected again
     event.target.value = '';
   };
@@ -669,27 +665,24 @@ const AccountManager: React.FC = () => {
           await clearBrowserData();
           // Update UI state to reflect no logged in user
           setCurrentUser({ loggedIn: false, synced: false });
-          showToast('Dados do navegador relacionados ao IGN foram apagados com sucesso!', 'success');
+          showToast(
+            'Dados do navegador relacionados ao IGN foram apagados com sucesso!',
+            'success',
+          );
         } catch (error) {
           showToast('Erro ao apagar dados do navegador: ' + error, 'error');
         } finally {
           setLoading(false);
           hideConfirm();
         }
-      }
+      },
     );
   };
 
   return (
     <div className="account-manager">
-      <h3>Gerenciador de Contas</h3>
-      
       <div className="account-actions-bar">
-        <button 
-          onClick={handleStartNewSession}
-          disabled={loading}
-          className="create-account"
-        >
+        <button onClick={handleStartNewSession} disabled={loading} className="create-account">
           Adicionar Conta
         </button>
         <button
@@ -698,7 +691,11 @@ const AccountManager: React.FC = () => {
           className={`sync-current-user ${!currentUser.loggedIn ? 'not-logged-in' : ''}`}
         >
           {currentUser.loggedIn ? (
-            currentUser.synced ? 'Atualizar Sessão Atual' : 'Sincronizar Sessão Atual'
+            currentUser.synced ? (
+              'Atualizar Sessão Atual'
+            ) : (
+              'Sincronizar Sessão Atual'
+            )
           ) : (
             <>
               <span className="status-icon">⚠️</span>
@@ -707,11 +704,7 @@ const AccountManager: React.FC = () => {
           )}
         </button>
         <div className="backup-actions">
-          <button
-            onClick={handleExportData}
-            disabled={loading}
-            className="backup"
-          >
+          <button onClick={handleExportData} disabled={loading} className="backup">
             Exportar Contas
           </button>
           <label className="restore">
@@ -722,7 +715,7 @@ const AccountManager: React.FC = () => {
               disabled={loading}
               style={{ display: 'none' }}
             />
-            <span>Restaurar Contas</span>
+            Restaurar Contas
           </label>
           <button
             onClick={handleClearBrowserData}
@@ -743,20 +736,22 @@ const AccountManager: React.FC = () => {
           </div>
         ) : (
           Object.entries(accounts.accounts).map(([id, account]) => (
-            <div 
-              key={id} 
+            <div
+              key={id}
               className={`account-item ${
                 account.status === 'pending' || account.isResyncing ? 'pending' : ''
               } ${
-                isAccountInErrorState(id) ? 'error' : accounts.activeAccountId === id ? 'active' : ''
-              } ${
-                isAccountActivating(id) ? 'activating' : ''
-              }`}
+                isAccountInErrorState(id)
+                  ? 'error'
+                  : accounts.activeAccountId === id
+                    ? 'active'
+                    : ''
+              } ${isAccountActivating(id) ? 'activating' : ''}`}
             >
               <div className="account-info">
                 {account.profile?.avatarUrl && (
-                  <img 
-                    src={account.profile.avatarUrl} 
+                  <img
+                    src={account.profile.avatarUrl}
                     alt={account.profile.displayName}
                     className="account-avatar"
                   />
@@ -766,7 +761,11 @@ const AccountManager: React.FC = () => {
                     {account.profile?.displayName || account.name}
                     {accounts.activeAccountId === id && (
                       <span className={`active-badge ${!currentUser.loggedIn ? 'error' : ''}`}>
-                        {isAccountActivating(id) ? 'Ativando...' : !currentUser.loggedIn ? 'Erro' : 'Ativa'}
+                        {isAccountActivating(id)
+                          ? 'Ativando...'
+                          : !currentUser.loggedIn
+                            ? 'Erro'
+                            : 'Ativa'}
                       </span>
                     )}
                     {account.status === 'pending' && ' (Pendente)'}
@@ -781,21 +780,19 @@ const AccountManager: React.FC = () => {
                 </div>
               </div>
               <div className="account-actions">
-                {accounts.activeAccountId !== id && account.status === 'synced' && !account.isResyncing && (
-                  <button
-                    onClick={() => handleSwitchAccount(id)}
-                    disabled={loading || !!activatingAccountId}
-                    className={isAccountActivating(id) ? 'activating' : ''}
-                  >
-                    {isAccountActivating(id) ? 'Ativando...' : 'Ativar'}
-                  </button>
-                )}
+                {accounts.activeAccountId !== id &&
+                  account.status === 'synced' &&
+                  !account.isResyncing && (
+                    <button
+                      onClick={() => handleSwitchAccount(id)}
+                      disabled={loading || !!activatingAccountId}
+                      className={isAccountActivating(id) ? 'activating' : ''}
+                    >
+                      {isAccountActivating(id) ? 'Ativando...' : 'Ativar'}
+                    </button>
+                  )}
                 {account.status === 'synced' && !account.isResyncing && (
-                  <button
-                    onClick={() => handleResync(id)}
-                    disabled={loading}
-                    className="resync"
-                  >
+                  <button onClick={() => handleResync(id)} disabled={loading} className="resync">
                     Resetar
                   </button>
                 )}
@@ -821,13 +818,7 @@ const AccountManager: React.FC = () => {
         )}
       </div>
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <ConfirmDialog
         isOpen={confirm.isOpen}
@@ -840,4 +831,4 @@ const AccountManager: React.FC = () => {
   );
 };
 
-export default AccountManager; 
+export default AccountManager;

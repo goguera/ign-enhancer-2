@@ -17,6 +17,7 @@ export type Settings = {
   closeTabOnPost: BooleanString;
   timeToClose: string;
   enableQuickFlood: BooleanString;
+  enableLogs: BooleanString;
 };
 
 export type SettingsItem = keyof Settings;

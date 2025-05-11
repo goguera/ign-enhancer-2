@@ -7,8 +7,8 @@ Browser extension to enhance the IGN forums experience.
 - Auto flood
 - Primeira página infinita
 - Fechar aba automaticamente após enviar o post (configurável)
-- Background posting com múltiplas contas
-- muito mais (soon)
+- Modo Quick Flood
+
 
 ## Architecture
 
@@ -27,7 +27,7 @@ source/
 │   ├── features/         # Feature-specific modules
 │   │   ├── autoclose/    
 │   │   ├── autoflood/    
-│   │   ├── background-posting/
+│   │   ├── quick-flood/
 │   │   └── neverending/  
 │   ├── services/         # Cross-feature services
 │   ├── types/            # TypeScript type definitions

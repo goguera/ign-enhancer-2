@@ -1,4 +1,5 @@
 import { browser } from 'webextension-polyfill-ts';
+import { getConfig } from './options';
 
 // Define log levels
 export enum LogLevel {
@@ -32,6 +33,19 @@ export async function addLog(
   message: string,
   data?: any
 ): Promise<void> {
+  // First check if logging is enabled
+  try {
+    const enableLogs = await getConfig('enableLogs');
+    if (enableLogs !== 'yes') {
+      // Logging is disabled, just return
+      return;
+    }
+  } catch (error) {
+    // In case of error reading settings, default to not logging
+    console.error('Failed to check logging enabled state:', error);
+    return;
+  }
+
   const entry: LogEntry = {
     timestamp: Date.now(),
     level,

@@ -162,9 +162,7 @@ const DebugLogger: React.FC = () => {
   };
 
   return (
-    <div className="debug-logger">
-      <h3>Logs de Depuração</h3>
-      
+    <div className="debug-logger">      
       <div className="debug-controls">
         <div className="filter-controls">
           <div className="search-control">

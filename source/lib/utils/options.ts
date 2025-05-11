@@ -6,6 +6,7 @@ export const defaultSettings: Settings = {
   closeTabOnPost: 'no',
   timeToClose: '10',
   enableQuickFlood: 'yes',
+  enableLogs: 'no',
 };
 
 export async function getSettings(filter?: SettingsItem[] | SettingsItem): Promise<Settings> {
