@@ -16,7 +16,6 @@ export type BooleanString = 'yes' | 'no';
 export type Settings = {
   closeTabOnPost: BooleanString;
   timeToClose: string;
-  maxNumberOfVisibleThreadsBeforeHalt: string;
   enableQuickFlood: BooleanString;
 };
 

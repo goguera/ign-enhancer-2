@@ -16,7 +16,7 @@ const disabledText = 'Modo flood: OFF';
 const enabledText = 'Modo flood: ON';
 
 export const egofilterButton: ToolbarButtonSpecsResolver = async () => {
-  const limit = 1 // await getConfig('maxNumberOfVisibleThreadsBeforeHalt').then(Number);
+  const limit = 1 
   return {
     initialText: disabledText,
     onClick: (anchor, inner, ripple) => {

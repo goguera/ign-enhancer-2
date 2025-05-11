@@ -2,16 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { browser } from 'webextension-polyfill-ts';
 import './styles.scss';
 import { Settings, BooleanString } from '../lib/types';
-import { setSettings as setExtensionSettings } from '@lib/utils/options';
+import { setSettings as setExtensionSettings, defaultSettings } from '@lib/utils/options';
 import AccountManager from './AccountManager';
 import DebugLogger from './DebugLogger';
-
-const defaultSettings: Settings = {
-  closeTabOnPost: 'no',
-  timeToClose: '10',
-  maxNumberOfVisibleThreadsBeforeHalt: '20',
-  enableQuickFlood: 'yes',
-};
 
 const IGNEnhancerSettings: React.FC = () => {
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -23,15 +16,12 @@ const IGNEnhancerSettings: React.FC = () => {
         const result = await browser.storage.local.get([
           'closeTabOnPost', 
           'timeToClose', 
-          'maxNumberOfVisibleThreadsBeforeHalt',
           'enableQuickFlood'
         ]);
         if (Object.keys(result).length !== 0) {
           setSettings({
-            closeTabOnPost: result.closeTabOnPost || 'no',
-            timeToClose: result.timeToClose || '10',
-            maxNumberOfVisibleThreadsBeforeHalt: result.maxNumberOfVisibleThreadsBeforeHalt || '200',
-            enableQuickFlood: result.enableQuickFlood || 'yes',
+            ...defaultSettings,
+            ...result
           });
         }
       } catch (error) {
@@ -65,9 +55,8 @@ const IGNEnhancerSettings: React.FC = () => {
     }
     setExtensionSettings({
       closeTabOnPost: settings.closeTabOnPost,
-      timeToClose: settings.timeToClose || '10',
-      maxNumberOfVisibleThreadsBeforeHalt: settings.maxNumberOfVisibleThreadsBeforeHalt || '200',
-      enableQuickFlood: settings.enableQuickFlood || 'yes',
+      timeToClose: settings.timeToClose,
+      enableQuickFlood: settings.enableQuickFlood,
     }).then(() => window.close());
   };
 
@@ -94,7 +83,7 @@ const IGNEnhancerSettings: React.FC = () => {
                 <select
                   id="close-tab-on-post"
                   name="closeTabOnPost"
-                  value={settings.closeTabOnPost || 'no'}
+                  value={settings.closeTabOnPost}
                   onChange={handleInputChange}
                 >
                   <option value="yes">Sim</option>
@@ -108,34 +97,19 @@ const IGNEnhancerSettings: React.FC = () => {
                   type="number"
                   id="time-to-close"
                   name="timeToClose"
-                  value={settings.timeToClose || '2'}
+                  value={settings.timeToClose}
                   onChange={handleInputChange}
                   min="1"
                   max="10"
                 />
               </div>
-
-              {/* <div className="setting">
-                <label htmlFor="max-number-of-visible-threads-before-halt">
-                  Número máximo de tópicos visíveis antes de esconder
-                </label>
-                <input
-                  type="number"
-                  id="max-number-of-visible-threads-before-halt"
-                  name="maxNumberOfVisibleThreadsBeforeHalt"
-                  value={settings.maxNumberOfVisibleThreadsBeforeHalt || '20'}
-                  onChange={handleInputChange}
-                  min="5"
-                  max="100"
-                />
-              </div> */}
               
               <div className="setting">
                 <label htmlFor="enable-quick-flood">Habilitar Quick Flood</label>
                 <select
                   id="enable-quick-flood"
                   name="enableQuickFlood"
-                  value={settings.enableQuickFlood || 'yes'}
+                  value={settings.enableQuickFlood}
                   onChange={handleInputChange}
                 >
                   <option value="yes">Sim</option>
