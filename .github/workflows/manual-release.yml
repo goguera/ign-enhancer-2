@@ -13,6 +13,12 @@ on:
         default: 'false'
         type: boolean
 
+# Explicitly define the permissions needed for this workflow
+permissions:
+  contents: write    # Required for creating releases and uploading assets
+  issues: read       # Optional, if you need to reference issues
+  pull-requests: read # Optional, if you need to reference PRs
+
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
