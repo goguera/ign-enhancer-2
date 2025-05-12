@@ -405,10 +405,6 @@ body {
     z-index: 1;
   }
 
-  &:hover {
-    box-shadow: var(--shadow-hard);
-    transform: translateY(-2px);
-  }
 }
 
 .tabs {
@@ -685,9 +681,31 @@ textarea {
   }
 }
 
+.input-with-suffix {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  
+  .input-suffix {
+    position: absolute;
+    right: 30px; /* Leave space for the spinner buttons */
+    color: var(--text-muted);
+    font-size: 14px;
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
 .number-input {
-  max-width: 80px;
-  text-align: center;
+  max-width: 120px;
+  text-align: right;
+  padding-right: 45px; /* Make room for suffix and spinner */
+  
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 24px;
+  }
 }
 
 button {
@@ -760,17 +778,20 @@ label {
 /* Account Manager Styles */
 .accounts-tab .account-manager {
   margin-top: var(--space-md);
-
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  
   .account-actions-bar {
     display: flex;
     gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
     flex-wrap: wrap;
+    margin-bottom: 0;
 
     button {
       flex: 1;
       min-width: 120px;
-      padding: 8px 12px;
+      padding: 10px 12px;
       font-size: 13px;
       border-radius: var(--border-radius-sm);
       white-space: nowrap;
@@ -1253,6 +1274,9 @@ label {
             background: var(--ign-red-hover);
           }
         }
+        &.cancel {
+          color: black;
+        }
       }
     }
 
@@ -1303,11 +1327,7 @@ label {
   gap: var(--space-md);
   padding: var(--space-sm) 0;
   margin-bottom: var(--space-lg);
-  
-  &:not(:last-child) {
-    border-bottom: 1px solid var(--border-color);
-  }
-  
+    
   .setting-card {
     display: flex;
     flex-direction: column;
@@ -1335,6 +1355,7 @@ label {
         font-weight: 600;
         color: var(--ign-red);
         margin: 0;
+        border-bottom: none;
       }
       
       .expand-icon {
@@ -1959,6 +1980,182 @@ table {
     p {
       font-size: 12px;
       opacity: 0.8;
+    }
+  }
+}
+
+/* Accounts List Styles */
+.accounts-list {
+  margin-top: var(--space-md);
+  
+  .accounts-header {
+    margin-bottom: 0;
+    padding-left: 5px;
+  }
+  
+  .no-accounts {
+    padding: var(--space-lg);
+    background-color: var(--bg-white);
+    border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+    color: var(--text-secondary);
+    text-align: center;
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-md);
+  }
+  
+  .account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background-color: var(--bg-white);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--space-md);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-medium);
+    box-shadow: var(--shadow-soft);
+    
+    
+    &.active {
+      border-left: 5px solid var(--ign-red);
+      padding-left: calc(var(--space-md) - 4px);
+    }
+    
+    &.error {
+      border-left: 5px solid #dc3545;
+      padding-left: calc(var(--space-md) - 4px);
+      background-color: rgba(220, 53, 69, 0.05);
+    }
+    
+    &.pending {
+      border-left: 5px solid #ffc107;
+      padding-left: calc(var(--space-md) - 4px);
+      background-color: rgba(255, 193, 7, 0.05);
+    }
+    
+    &.activating {
+      position: relative;
+      overflow: hidden;
+      
+      &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: shimmer 1.5s infinite;
+      }
+    }
+    
+    .account-info {
+      display: flex;
+      align-items: center;
+      
+      .account-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        margin-right: var(--space-md);
+        border: 2px solid var(--border-color);
+        background-color: var(--bg-light);
+      }
+      
+      .account-details {
+        display: flex;
+        flex-direction: column;
+        
+        .account-name {
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+          
+          .active-badge {
+            margin-left: var(--space-sm);
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background-color: var(--ign-red);
+            color: white;
+            font-weight: normal;
+            
+            &.error {
+              background-color: #dc3545;
+            }
+          }
+        }
+        
+        .account-username {
+          color: var(--text-secondary);
+          font-size: 14px;
+          margin-bottom: var(--space-xs);
+        }
+        
+        .account-timestamp {
+          color: var(--text-muted);
+          font-size: 12px;
+        }
+      }
+    }
+    
+    .account-actions {
+      display: flex;
+      gap: var(--space-sm);
+      
+      button {
+        padding: 6px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        
+        &.resync {
+          background-color: #ffc107;
+          color: black;
+          
+          &:hover {
+            background-color: #e0a800;
+          }
+        }
+        
+        &.delete {
+          background-color: #dc3545;
+          
+          &:hover {
+            background-color: #c82333;
+          }
+        }
+        
+        &.complete-sync {
+          background-color: #17a2b8;
+          
+          &:hover {
+            background-color: #138496;
+          }
+        }
+        
+        &.activating {
+          background-color: #6c757d;
+          position: relative;
+          overflow: hidden;
+          
+          &:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 1.5s infinite;
+          }
+          
+          &:hover {
+            background-color: #6c757d;
+          }
+        }
+      }
     }
   }
 }

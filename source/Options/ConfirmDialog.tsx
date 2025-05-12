@@ -23,7 +23,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <h4>{title}</h4>
         <p className="confirm-message">{message}</p>
         <div className="modal-actions">
-          <button onClick={onCancel}>
+          <button onClick={onCancel} className='cancel'>
             Cancelar
           </button>
           <button onClick={onConfirm} className="confirm">

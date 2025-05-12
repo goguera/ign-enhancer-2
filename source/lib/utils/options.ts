@@ -7,6 +7,10 @@ export const defaultSettings: Settings = {
   timeToClose: '10',
   enableQuickFlood: 'yes',
   enableLogs: 'no',
+  // Default values for new Quick Flood settings
+  autoCollapseThreadAfterPosting: 'yes',
+  threadFrameHeight: '600',
+  autoOpenNextThreadAfterPosting: 'no',
 };
 
 export async function getSettings(filter?: SettingsItem[] | SettingsItem): Promise<Settings> {

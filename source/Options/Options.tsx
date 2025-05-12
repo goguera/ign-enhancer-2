@@ -11,6 +11,8 @@ import AccountManager from './AccountManager';
 import DebugLogger from './DebugLogger';
 import AboutTab from './AboutTab';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 // Tab types
 type TabType = 'general' | 'quickFlood' | 'accounts' | 'debug' | 'about';
 
@@ -32,7 +34,7 @@ const IGNEnhancerSettings: React.FC = () => {
         console.error(error);
       }
     };
-    
+
     loadSettings();
   }, []);
 
@@ -46,7 +48,7 @@ const IGNEnhancerSettings: React.FC = () => {
   // Handle saving settings with debounce
   const saveSettings = async () => {
     setSaveStatus('saving');
-    
+
     try {
       await setExtensionSettings(settings);
       setSaveStatus('saved');
@@ -61,9 +63,9 @@ const IGNEnhancerSettings: React.FC = () => {
 
   // Handle toggle changes
   const handleToggleChange = (key: keyof Settings) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [key]: prev[key] === 'yes' ? 'no' : 'yes'
+      [key]: prev[key] === 'yes' ? 'no' : 'yes',
     }));
     setSaveStatus('idle');
     setTimeout(saveSettings, 500);
@@ -72,9 +74,9 @@ const IGNEnhancerSettings: React.FC = () => {
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     setSaveStatus('idle');
     setTimeout(saveSettings, 500);
@@ -93,7 +95,7 @@ const IGNEnhancerSettings: React.FC = () => {
     if (tab === 'debug' && settings.enableLogs !== 'yes') {
       tab = 'general';
     }
-    
+
     // Scroll to top when changing tabs
     const tabContent = document.querySelector('.tab-content');
     if (tabContent) {
@@ -110,28 +112,30 @@ const IGNEnhancerSettings: React.FC = () => {
       <header className="header">
         <div className="logo-container">
           <img src="assets/icons/logo.png" alt="IGN Logo" className="logo" />
-          <h1><span>IGN</span> Enhancer</h1>
+          <h1>
+            <span>IGN</span> Enhancer
+          </h1>
         </div>
         <p>Personalize sua experiência de navegação no IGN</p>
       </header>
 
       <div className="settings-section">
         <div className="tabs">
-          <button 
-            className={`tab ${activeTab === 'general' ? 'active' : ''}`} 
+          <button
+            className={`tab ${activeTab === 'general' ? 'active' : ''}`}
             onClick={() => changeTab('general')}
             aria-selected={activeTab === 'general'}
           >
             Geral
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'quickFlood' ? 'active' : ''}`}
             onClick={() => changeTab('quickFlood')}
             aria-selected={activeTab === 'quickFlood'}
           >
             Quick Flood
           </button>
-          <button 
+          <button
             className={`tab ${activeTab === 'accounts' ? 'active' : ''}`}
             onClick={() => changeTab('accounts')}
             aria-selected={activeTab === 'accounts'}
@@ -139,7 +143,7 @@ const IGNEnhancerSettings: React.FC = () => {
             Contas
           </button>
           {settings.enableLogs === 'yes' && (
-            <button 
+            <button
               className={`tab ${activeTab === 'debug' ? 'active' : ''}`}
               onClick={() => changeTab('debug')}
               aria-selected={activeTab === 'debug'}
@@ -147,7 +151,7 @@ const IGNEnhancerSettings: React.FC = () => {
               Debug
             </button>
           )}
-          <button 
+          <button
             className={`tab ${activeTab === 'about' ? 'active' : ''}`}
             onClick={() => changeTab('about')}
             aria-selected={activeTab === 'about'}
@@ -159,17 +163,22 @@ const IGNEnhancerSettings: React.FC = () => {
         <div className="tab-content">
           <div className={`tab-pane ${activeTab === 'general' ? 'active' : ''}`}>
             <h2>Configurações Gerais</h2>
-            
+
             <div className="setting-group">
               <div className="setting-card">
                 <div className="setting-card-header">
                   <h3>Fechar aba após postar</h3>
                 </div>
                 <div className="setting-card-content">
-                  <div className="setting-item checkbox-item" onClick={() => handleToggleChange('closeTabOnPost')}>
+                  <div
+                    className="setting-item checkbox-item"
+                    onClick={() => handleToggleChange('closeTabOnPost')}
+                  >
                     <div className="setting-label">
                       <label htmlFor="closeTabOnPost">Ativo</label>
-                      <span className="setting-description">Fechar a aba automaticamente após postar</span>
+                      <span className="setting-description">
+                        Fechar a aba automaticamente após postar
+                      </span>
                     </div>
                     <div className="setting-control">
                       <label className="toggle">
@@ -186,12 +195,14 @@ const IGNEnhancerSettings: React.FC = () => {
                       </label>
                     </div>
                   </div>
-                  
+
                   {settings.closeTabOnPost === 'yes' && (
                     <div className="setting-item setting-dependent">
                       <div className="setting-label">
                         <label htmlFor="timeToClose">Tempo para fechar (segundos)</label>
-                        <span className="setting-description">Segundos para esperar antes de fechar a aba</span>
+                        <span className="setting-description">
+                          Segundos para esperar antes de fechar a aba
+                        </span>
                       </div>
                       <div className="setting-control">
                         <input
@@ -210,60 +221,73 @@ const IGNEnhancerSettings: React.FC = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="setting-group">
-              <div className="setting-card advanced-card" onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}>
-                <div className="setting-card-header">
-                  <h3>Opções Avançadas</h3>
-                  <div className="expand-icon">
-                    {showAdvancedOptions ? '▼' : '▶'}
+
+            {isDevelopment && (
+              <div className="setting-group">
+                <div
+                  className="setting-card advanced-card"
+                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                >
+                  <div className="setting-card-header">
+                    <h3>Opções Avançadas</h3>
+                    <div className="expand-icon">{showAdvancedOptions ? '▼' : '▶'}</div>
                   </div>
-                </div>
-                
-                {showAdvancedOptions && (
-                  <div className="setting-card-content">
-                    <div className="setting-item checkbox-item" onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleChange('enableLogs');
-                    }}>
-                      <div className="setting-label">
-                        <label htmlFor="enableLogs">Habilitar Logs de Depuração</label>
-                        <span className="setting-description">Ativar o registro de logs para depuração (pode impactar a performance)</span>
-                      </div>
-                      <div className="setting-control">
-                        <label className="toggle">
-                          <input
-                            type="checkbox"
-                            id="enableLogs"
-                            checked={settings.enableLogs === 'yes'}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              handleToggleChange('enableLogs');
-                            }}
-                          />
-                          <span className="toggle-slider"></span>
-                        </label>
+
+                  {showAdvancedOptions && (
+                    <div className="setting-card-content">
+                      <div
+                        className="setting-item checkbox-item"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleChange('enableLogs');
+                        }}
+                      >
+                        <div className="setting-label">
+                          <label htmlFor="enableLogs">Habilitar Logs de Depuração</label>
+                          <span className="setting-description">
+                            Ativar o registro de logs para depuração (pode impactar a performance)
+                          </span>
+                        </div>
+                        <div className="setting-control">
+                          <label className="toggle">
+                            <input
+                              type="checkbox"
+                              id="enableLogs"
+                              checked={settings.enableLogs === 'yes'}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleToggleChange('enableLogs');
+                              }}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className={`tab-pane ${activeTab === 'quickFlood' ? 'active' : ''}`}>
             <h2>Configurações do Quick Flood</h2>
-            
+
             <div className="setting-group">
               <div className="setting-card">
                 <div className="setting-card-header">
                   <h3>Ativar Quick Flood</h3>
                 </div>
                 <div className="setting-card-content">
-                  <div className="setting-item checkbox-item" onClick={() => handleToggleChange('enableQuickFlood')}>
+                  <div
+                    className="setting-item checkbox-item"
+                    onClick={() => handleToggleChange('enableQuickFlood')}
+                  >
                     <div className="setting-label">
                       <label htmlFor="enableQuickFlood">Ativo</label>
-                      <span className="setting-description">Ativar funcionalidade de postagem rápida</span>
+                      <span className="setting-description">
+                        Ativar funcionalidade de postagem rápida
+                      </span>
                     </div>
                     <div className="setting-control">
                       <label className="toggle">
@@ -283,8 +307,110 @@ const IGNEnhancerSettings: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {settings.enableQuickFlood === 'yes' && (
+              <>
+                <div className="setting-group">
+                  <div className="setting-card">
+                    <div className="setting-card-header">
+                      <h3>Comportamento após postar</h3>
+                    </div>
+                    <div className="setting-card-content">
+                      <div
+                        className="setting-item checkbox-item"
+                        onClick={() => handleToggleChange('autoCollapseThreadAfterPosting')}
+                      >
+                        <div className="setting-label">
+                          <label htmlFor="autoCollapseThreadAfterPosting">Colapsar tópico</label>
+                          <span className="setting-description">
+                            Colapsar automaticamente o tópico após enviar resposta
+                          </span>
+                        </div>
+                        <div className="setting-control">
+                          <label className="toggle">
+                            <input
+                              type="checkbox"
+                              id="autoCollapseThreadAfterPosting"
+                              checked={settings.autoCollapseThreadAfterPosting === 'yes'}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleToggleChange('autoCollapseThreadAfterPosting');
+                              }}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div
+                        className="setting-item checkbox-item"
+                        onClick={() => handleToggleChange('autoOpenNextThreadAfterPosting')}
+                      >
+                        <div className="setting-label">
+                          <label htmlFor="autoOpenNextThreadAfterPosting">
+                            Expandir próximo tópico
+                          </label>
+                          <span className="setting-description">
+                            Expandir automaticamente o próximo tópico da lista após enviar resposta
+                          </span>
+                        </div>
+                        <div className="setting-control">
+                          <label className="toggle">
+                            <input
+                              type="checkbox"
+                              id="autoOpenNextThreadAfterPosting"
+                              checked={settings.autoOpenNextThreadAfterPosting === 'yes'}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleToggleChange('autoOpenNextThreadAfterPosting');
+                              }}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="setting-group">
+                  <div className="setting-card">
+                    <div className="setting-card-header">
+                      <h3>Aparência</h3>
+                    </div>
+                    <div className="setting-card-content">
+                      <div className="setting-item">
+                        <div className="setting-label">
+                          <label htmlFor="threadFrameHeight">
+                            Altura do frame da thread (pixels)
+                          </label>
+                          <span className="setting-description">
+                            Ajustar a altura do frame onde as threads são exibidas
+                          </span>
+                        </div>
+                        <div className="setting-control">
+                          <div className="input-with-suffix">
+                            <input
+                              type="number"
+                              id="threadFrameHeight"
+                              name="threadFrameHeight"
+                              min="300"
+                              max="1200"
+                              value={settings.threadFrameHeight}
+                              onChange={handleInputChange}
+                              className="number-input"
+                            />
+                            <span className="input-suffix">px</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-          
+
           <div className={`tab-pane accounts-tab ${activeTab === 'accounts' ? 'active' : ''}`}>
             <h2>Gerenciador de Contas</h2>
             <AccountManager />

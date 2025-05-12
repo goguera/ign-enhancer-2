@@ -18,6 +18,9 @@ export type Settings = {
   timeToClose: string;
   enableQuickFlood: BooleanString;
   enableLogs: BooleanString;
+  autoCollapseThreadAfterPosting: BooleanString;
+  threadFrameHeight: string;
+  autoOpenNextThreadAfterPosting: BooleanString;
 };
 
 export type SettingsItem = keyof Settings;

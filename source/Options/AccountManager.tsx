@@ -681,58 +681,68 @@ const AccountManager: React.FC = () => {
 
   return (
     <div className="account-manager">
-      <div className="account-actions-bar">
-        <button onClick={handleStartNewSession} disabled={loading} className="create-account">
-          Adicionar Conta
-        </button>
-        <button
-          onClick={handleSyncCurrentUser}
-          disabled={loading}
-          className={`sync-current-user ${!currentUser.loggedIn ? 'not-logged-in' : ''}`}
-        >
-          {currentUser.loggedIn ? (
-            currentUser.synced ? (
-              'Atualizar Sessão Atual'
-            ) : (
-              'Sincronizar Sessão Atual'
-            )
-          ) : (
-            <>
-              <span className="status-icon">⚠️</span>
-              Não Logado
-            </>
-          )}
-        </button>
-        <div className="backup-actions">
-          <button onClick={handleExportData} disabled={loading} className="backup">
-            Exportar Contas
-          </button>
-          <label className="restore">
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportData}
+      <div className="setting-card">
+        <div className="setting-card-header">
+          <h3>Gerenciar Contas</h3>
+        </div>
+        <div className="setting-card-content">
+          <div className="account-actions-bar">
+            <button onClick={handleStartNewSession} disabled={loading} className="create-account">
+              Adicionar Conta
+            </button>
+            <button
+              onClick={handleSyncCurrentUser}
               disabled={loading}
-              style={{ display: 'none' }}
-            />
-            Restaurar Contas
-          </label>
-          <button
-            onClick={handleClearBrowserData}
-            disabled={loading}
-            className="clear-browser-data"
-            title="Limpa cookies e dados do navegador relacionados ao IGN Boards, sem apagar contas salvas na extensão"
-          >
-            Limpar Dados do Navegador
-          </button>
+              className={`sync-current-user ${!currentUser.loggedIn ? 'not-logged-in' : ''}`}
+            >
+              {currentUser.loggedIn ? (
+                currentUser.synced ? (
+                  'Atualizar Sessão Atual'
+                ) : (
+                  'Sincronizar Sessão Atual'
+                )
+              ) : (
+                <>
+                  <span className="status-icon">⚠️</span>
+                  Não Logado
+                </>
+              )}
+            </button>
+            <div className="backup-actions">
+              <button onClick={handleExportData} disabled={loading} className="backup">
+                Exportar Contas
+              </button>
+              <label className="restore">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportData}
+                  disabled={loading}
+                  style={{ display: 'none' }}
+                />
+                Restaurar Contas
+              </label>
+              <button
+                onClick={handleClearBrowserData}
+                disabled={loading}
+                className="clear-browser-data"
+                title="Limpa cookies e dados do navegador relacionados ao IGN Boards, sem apagar contas salvas na extensão"
+              >
+                Limpar Dados do Navegador
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="accounts-list">
-        <h4>Contas Salvas</h4>
+        <div className="setting-card-header accounts-header">
+          <h3>Contas Salvas</h3>
+        </div>
         {Object.entries(accounts.accounts).length === 0 ? (
           <div className="no-accounts">
-            Nenhuma conta salva. Clique em "Nova Conta" para adicionar uma.
+            Nenhuma conta salva. Clique em "Sincronizar Sessão Atual" se já estiver logado no IGN
+            Boards, ou "Adicionar Conta" para fazer um novo login.
           </div>
         ) : (
           Object.entries(accounts.accounts).map(([id, account]) => (
