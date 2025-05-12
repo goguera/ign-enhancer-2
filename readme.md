@@ -191,6 +191,31 @@ pnpm release -- --github-release
 
 For more options and details, see the [Publish Script Documentation](./scripts/README.md).
 
+### Automated Releases with GitHub Actions
+
+The project includes GitHub Actions workflows for automated releases:
+
+1. **Tag-based Releases**: 
+   - Simply push a tag in the format `v*` (e.g., `v2.1.0`)
+   - GitHub Actions will automatically build and publish a release
+
+   ```bash
+   git tag v2.1.0
+   git push origin v2.1.0
+   ```
+
+2. **Manual Releases**:
+   - Go to the "Actions" tab in your GitHub repository
+   - Select the "Manual Release" workflow
+   - Click "Run workflow"
+   - Enter the version number and click "Run workflow"
+
+These workflows will:
+- Build the extension for all browsers
+- Create a GitHub release with the appropriate version
+- Upload all browser packages as release assets
+- Store artifacts in the workflow run
+
 ### Best Practices
 
 1. Keep content scripts minimal - they should only initialize features
