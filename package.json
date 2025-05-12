@@ -69,6 +69,7 @@
     "fork-ts-checker-webpack-plugin": "^9.0.2",
     "html-webpack-plugin": "^5.6.0",
     "mini-css-extract-plugin": "^2.7.7",
+    "node-fetch": "2",
     "postcss": "^8.4.33",
     "postcss-loader": "^8.1.0",
     "prettier": "^3.3.3",

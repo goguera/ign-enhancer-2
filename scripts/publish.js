@@ -23,6 +23,8 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+// Fix for Octokit's fetch requirement
+global.fetch = require('node-fetch');
 const { Octokit } = require('@octokit/rest');
 const package = require('../package.json');
 
