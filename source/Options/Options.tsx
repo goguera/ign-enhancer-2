@@ -6,6 +6,7 @@ import {
   setSettings as setExtensionSettings,
   getSettings,
   defaultSettings,
+  setConfig,
 } from '@lib/utils/options';
 import AccountManager from './AccountManager';
 import DebugLogger from './DebugLogger';
@@ -28,6 +29,7 @@ const IGNEnhancerSettings: React.FC = () => {
     const loadSettings = async () => {
       try {
         const savedSettings = await getSettings();
+        console.log('Loaded settings:', savedSettings);
         setSettings(savedSettings);
       } catch (error) {
         setErrorMessage('Falha ao carregar configurações');
@@ -50,7 +52,23 @@ const IGNEnhancerSettings: React.FC = () => {
     setSaveStatus('saving');
 
     try {
-      await setExtensionSettings(settings);
+      // Special validation for number fields before saving
+      const adjustedSettings = { ...settings };
+      
+      // Ensure threadFrameHeight is valid
+      if (adjustedSettings.threadFrameHeight) {
+        const heightValue = parseInt(adjustedSettings.threadFrameHeight);
+        if (isNaN(heightValue) || heightValue < 600 || heightValue > 1200) {
+          adjustedSettings.threadFrameHeight = '600'; // Reset to default if invalid
+        } else {
+          adjustedSettings.threadFrameHeight = String(heightValue); // Ensure it's a string
+        }
+      } else {
+        adjustedSettings.threadFrameHeight = '600'; // Use default if missing
+      }
+      
+      console.log('Saving settings:', adjustedSettings);
+      await setExtensionSettings(adjustedSettings);
       setSaveStatus('saved');
       // Reset after showing saved message
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -58,6 +76,35 @@ const IGNEnhancerSettings: React.FC = () => {
       setErrorMessage('Falha ao salvar configurações');
       console.error(error);
       setSaveStatus('idle');
+    }
+  };
+
+  // Special function to save thread height
+  const saveThreadHeight = async (height: string) => {
+    console.log(`Explicitly saving threadFrameHeight: ${height}`);
+    try {
+      // Convert to number and validate
+      const numHeight = parseInt(height);
+      if (!isNaN(numHeight) && numHeight >= 600 && numHeight <= 1200) {
+        // Save directly with setConfig to ensure it's saved
+        await setExtensionSettings({ threadFrameHeight: String(numHeight) });
+        console.log(`Thread height saved successfully: ${numHeight}`);
+        
+        // Update local state
+        setSettings(prev => ({ 
+          ...prev, 
+          threadFrameHeight: String(numHeight) 
+        }));
+        
+        // Show saved status
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } else {
+        console.error(`Invalid thread height: ${height}`);
+      }
+    } catch (error) {
+      console.error('Error saving thread height:', error);
+      setErrorMessage('Falha ao salvar altura do frame');
     }
   };
 
@@ -74,12 +121,31 @@ const IGNEnhancerSettings: React.FC = () => {
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setSettings((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setSaveStatus('idle');
-    setTimeout(saveSettings, 500);
+    
+    // Update UI immediately
+    setSettings(prev => ({ ...prev, [name]: value }));
+    
+    // Handle thread height separately
+    if (name === 'threadFrameHeight') {
+      console.log('Thread height input change:', value);
+      
+      // Don't attempt to save incomplete or invalid input
+      if (value === '' || isNaN(parseInt(value))) {
+        return;
+      }
+      
+      // For valid numeric values, schedule a save
+      const numValue = parseInt(value);
+      if (numValue >= 600 && numValue <= 1200) {
+        setSaveStatus('saving');
+        // Use a longer delay for thread height to allow for typing
+        setTimeout(() => saveThreadHeight(value), 1000);
+      }
+    } else {
+      // For all other settings, use the normal save mechanism
+      setSaveStatus('idle');
+      setTimeout(saveSettings, 500);
+    }
   };
 
   // Render save status indicator
@@ -394,10 +460,25 @@ const IGNEnhancerSettings: React.FC = () => {
                               type="number"
                               id="threadFrameHeight"
                               name="threadFrameHeight"
-                              min="300"
+                              min="600"
                               max="1200"
                               value={settings.threadFrameHeight}
                               onChange={handleInputChange}
+                              onFocus={(e) => e.target.select()}
+                              onBlur={(e) => {
+                                // Validate and correct value on blur
+                                const numValue = parseInt(e.target.value);
+                                if (isNaN(numValue) || numValue < 600) {
+                                  // Reset to minimum and save
+                                  saveThreadHeight('600');
+                                } else if (numValue > 1200) {
+                                  // Cap at maximum and save
+                                  saveThreadHeight('1200');
+                                } else {
+                                  // Save valid value
+                                  saveThreadHeight(String(numValue));
+                                }
+                              }}
                               className="number-input"
                             />
                             <span className="input-suffix">px</span>

@@ -6,12 +6,25 @@ const LOG_SOURCE = 'quick-flood';
 
 interface ExtendedWindow extends Window {
   [key: string]: any;
+  ign_flood_config?: {
+    enabled: boolean;
+    autoCollapseThreadAfterPosting: boolean;
+    threadFrameHeight: string;
+  };
 }
 
 declare global {
   interface HTMLIFrameElement {
     _messageHandler?: (event: MessageEvent) => void;
     _cleanup?: () => void;
+  }
+
+  interface Window {
+    ign_flood_config?: {
+      enabled: boolean;
+      autoCollapseThreadAfterPosting: boolean;
+      threadFrameHeight: string;
+    };
   }
 }
 
@@ -69,8 +82,11 @@ function updateThreadState(threadId: string, isVisible: boolean): void {
       wrapper.style.position = 'static';
     }
 
+    // Get the configured height from global config or use default
+    const heightValue = window.ign_flood_config?.threadFrameHeight || '700px';
+
     st.container.classList.remove('collapsed');
-    st.container.style.height = '700px';
+    st.container.style.height = heightValue;
     st.container.style.opacity = '1';
     st.container.style.position = 'relative';
     st.container.style.overflow = 'visible';
@@ -79,6 +95,7 @@ function updateThreadState(threadId: string, isVisible: boolean): void {
     st.container.style.zIndex = 'auto';
 
     if (iframe) {
+      iframe.style.height = heightValue;
       iframe.style.visibility = 'visible';
       iframe.style.position = 'relative';
       iframe.style.pointerEvents = 'auto';
@@ -179,12 +196,15 @@ function createThreadExpansion(
   wrapper.style.cssText =
     'grid-column:1/-1;width:100%;list-style:none;transition:height 0.3s ease, margin 0.3s ease;';
 
+  // Get the configured height or use default
+  const heightValue = window.ign_flood_config?.threadFrameHeight || '700px';
+
   // Create content container
   const container = document.createElement('div');
   container.id = `ign-quick-flood-content-${threadId}`;
   container.className = 'ign-quick-flood-content';
   container.style.cssText =
-    'border:1px solid #ddd;border-radius:4px;margin:10px 0;padding:0;background:#f9f9f9;overflow:hidden;animation:ign-quick-flood-fade-in .3s ease;transition:height 0.3s ease, opacity 0.3s ease, position 0s;height:700px;position:relative;';
+    `border:1px solid #ddd;border-radius:4px;margin:10px 0;padding:0;background:#f9f9f9;overflow:hidden;animation:ign-quick-flood-fade-in .3s ease;transition:height 0.3s ease, opacity 0.3s ease, position 0s;height:${heightValue};position:relative;`;
 
   // Add a title label for the collapsed state
   const titleLabel = document.createElement('div');
@@ -229,9 +249,13 @@ function createThreadIframe(url: string, threadId: string): HTMLIFrameElement {
   const ifr = document.createElement('iframe');
   ifr.id = `ign-quick-flood-iframe-${threadId}`;
   ifr.className = 'ign-quick-flood-iframe';
+  
+  // Get the configured height or use default
+  const heightValue = window.ign_flood_config?.threadFrameHeight || '700px';
+  
   // Initially hide the iframe completely until content is ready
   ifr.style.cssText =
-    'width:100%;height:700px;border:none;opacity:0;visibility:hidden;transition:opacity 0.3s ease;';
+    `width:100%;height:${heightValue};border:none;opacity:0;visibility:hidden;transition:opacity 0.3s ease;`;
 
   // Create a loading indicator with SVG spinner
   const loadingOverlay = document.createElement('div');
@@ -471,21 +495,25 @@ function injectCleanupScript(ifr: HTMLIFrameElement, threadId: string): void {
           st.statusIndicator.style.color = '#4CAF50';
         }
 
-        setTimeout(() => updateThreadState(threadId, false), 350);
-        // --- CLEANUP AND REMOVE THREAD FROM DOM ---
-        setTimeout(() => {
-          const iframe = st.container.querySelector('iframe') as HTMLIFrameElement | null;
-          if (iframe) {
-            iframe._cleanup?.();
-            iframe.remove();
-          }
+        // Check if we should auto-collapse
+        const shouldAutoCollapse = window.ign_flood_config?.autoCollapseThreadAfterPosting !== false;
+        
+        if (shouldAutoCollapse) {
+          setTimeout(() => updateThreadState(threadId, false), 350);
+          // --- CLEANUP AND REMOVE THREAD FROM DOM ---
+          setTimeout(() => {
+            const iframe = st.container.querySelector('iframe') as HTMLIFrameElement | null;
+            if (iframe) {
+              iframe._cleanup?.();
+              iframe.remove();
+            }
 
-          const wrapper = document.getElementById(`ign-quick-flood-wrapper-${threadId}`);
-          if (wrapper) wrapper.remove();
+            const wrapper = document.getElementById(`ign-quick-flood-wrapper-${threadId}`);
+            if (wrapper) wrapper.remove();
 
-          EXPANDED_THREADS.delete(threadId);
-        }, 500);
-
+            EXPANDED_THREADS.delete(threadId);
+          }, 500);
+        }
       } else if (d.type === 'queued') {
         // Use SVG icon instead of emoji
         st.successIndicator.innerHTML = ICONS.waiting;
@@ -500,7 +528,12 @@ function injectCleanupScript(ifr: HTMLIFrameElement, threadId: string): void {
           st.statusIndicator.style.color = '#FFA500';
         }
 
-        setTimeout(() => updateThreadState(threadId, false), 350);
+        // Check if we should auto-collapse
+        const shouldAutoCollapse = window.ign_flood_config?.autoCollapseThreadAfterPosting !== false;
+        
+        if (shouldAutoCollapse) {
+          setTimeout(() => updateThreadState(threadId, false), 350);
+        }
       } else if (d.type === 'pong') {
         // Received a pong response to our keepalive ping
         logger.debug(LOG_SOURCE, 'Received pong from thread', threadId);
@@ -542,7 +575,35 @@ function injectCleanupScript(ifr: HTMLIFrameElement, threadId: string): void {
 export async function initQuickFlood(): Promise<void> {
   try {
     const cfg = await getSettings();
-    if (cfg.enableQuickFlood !== 'yes' || !/\/forums\//.test(location.href)) return;
+    
+    // Ensure threadFrameHeight is a valid number with proper fallback
+    let heightValue = '700';
+    if (cfg.threadFrameHeight) {
+      const parsedHeight = parseInt(cfg.threadFrameHeight);
+      if (!isNaN(parsedHeight) && parsedHeight >= 600 && parsedHeight <= 1200) {
+        heightValue = cfg.threadFrameHeight;
+      }
+    }
+    
+    const quickFloodConfigs = {
+      enabled: cfg.enableQuickFlood === 'yes',
+      autoCollapseThreadAfterPosting: cfg.autoCollapseThreadAfterPosting === 'yes',
+      threadFrameHeight: heightValue + 'px'
+    };
+    
+    if (!quickFloodConfigs.enabled || !/\/forums\//.test(location.href)) return;
+    
+    // Debug logging for threadFrameHeight
+    console.log('Quick Flood settings:', {
+      rawHeight: cfg.threadFrameHeight,
+      parsedHeight: heightValue,
+      finalHeight: quickFloodConfigs.threadFrameHeight,
+      autoCollapse: quickFloodConfigs.autoCollapseThreadAfterPosting
+    });
+    
+    // Make config globally accessible
+    (window as any).ign_flood_config = quickFloodConfigs;
+    
     if (!document.getElementById('ign-quick-flood-global-styles')) {
       const st = document.createElement('style');
       st.id = 'ign-quick-flood-global-styles';
@@ -566,6 +627,9 @@ export async function initQuickFlood(): Promise<void> {
           align-items: center;
           justify-content: center;
           will-change: transform;
+          position: absolute;
+          right: 5px;
+          top: 3px;
         }
         .ign-quick-flood-button:focus {
           outline: none;
@@ -656,7 +720,7 @@ function addFloodButtonsToThreads(): void {
     const wrap = document.createElement('span');
     wrap.className = 'ign-quick-flood-button-container';
     wrap.style.cssText =
-      'display:inline-flex;align-items:center;vertical-align:middle;line-height:1;';
+      'display:inline-flex;align-items:center;vertical-align:middle;line-height:1;position:relative;float:right;';
     wrap.appendChild(btn);
     wrap.appendChild(ok);
     link.parentElement?.appendChild(wrap);

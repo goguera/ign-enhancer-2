@@ -9,7 +9,7 @@ export const defaultSettings: Settings = {
   enableLogs: 'no',
   // Default values for new Quick Flood settings
   autoCollapseThreadAfterPosting: 'yes',
-  threadFrameHeight: '600',
+  threadFrameHeight: '630',
   autoOpenNextThreadAfterPosting: 'no',
 };
 
@@ -24,11 +24,21 @@ export async function getSettings(filter?: SettingsItem[] | SettingsItem): Promi
 }
 
 export async function setSettings(settings: Partial<Settings>): Promise<void> {
+  console.log('setSettings called with:', settings);
   const originalSettings = await getSettings();
-  await browser.storage.local.set({
+  console.log('Original settings before merge:', originalSettings);
+  
+  const finalSettings = {
     ...originalSettings,
     ...settings,
-  });
+  };
+  
+  console.log('Final settings to be saved:', finalSettings);
+  await browser.storage.local.set(finalSettings);
+  
+  // Verify save operation
+  const verifySettings = await browser.storage.local.get(null);
+  console.log('Verified settings after save:', verifySettings);
 }
 
 export async function getConfig<T extends keyof Settings>(key: SettingsItem): Promise<Settings[T]> {

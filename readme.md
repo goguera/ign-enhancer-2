@@ -8,7 +8,7 @@ Browser extension to enhance the IGN forums experience.
 - Primeira página infinita
 - Fechar aba automaticamente após enviar o post (configurável)
 - Modo Quick Flood
-
+- Gerenciador de contas
 
 ## Architecture
 
@@ -112,6 +112,84 @@ To add a new feature:
 3. Create a thin content script wrapper in `/source/ContentScript/`
 4. Update `manifest.json` to register your content script with appropriate URL patterns
 5. Update `webpack.config.js` to include your content script in the build
+
+## Development
+
+### Prerequisites
+- Node.js (version specified in .nvmrc)
+- npm or yarn
+
+### Setup
+```
+npm install
+# or
+yarn
+```
+
+### Development Build
+```
+# For Chrome
+npm run dev:chrome
+# or
+yarn dev:chrome
+
+# For Firefox
+npm run dev:firefox
+# or
+yarn dev:firefox
+
+# For Opera
+npm run dev:opera
+# or
+yarn dev:opera
+```
+
+### Production Build
+```
+# Build for all browsers
+npm run build
+# or
+yarn build
+
+# Build for specific browser
+npm run build:chrome
+npm run build:firefox
+npm run build:opera
+# or
+yarn build:chrome
+yarn build:firefox
+yarn build:opera
+```
+
+## Publishing
+
+The extension includes a publish script that automates the build and release process:
+
+```
+npm run publish
+# or
+yarn publish
+# or
+pnpm publish
+```
+
+This will:
+1. Build the extension for all supported browsers
+2. Create a `release` directory with properly named packages (.zip for Chrome, .xpi for Firefox, .crx for Opera)
+
+### Creating a GitHub Release
+
+To create a GitHub release and upload the extension packages:
+
+```
+npm run publish -- --github-release
+# or
+yarn publish --github-release
+# or
+pnpm publish -- --github-release
+```
+
+For more options and details, see the [Publish Script Documentation](./scripts/README.md).
 
 ### Best Practices
 
