@@ -36,11 +36,4 @@ jobs:
       - name: Build and create GitHub release
         run: pnpm release -- --github-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: browser-extensions
-          path: release/
-          if-no-files-found: error 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

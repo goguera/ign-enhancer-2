@@ -49,11 +49,4 @@ jobs:
         run: |
           pnpm release -- --github-release --tag v${{ github.event.inputs.version }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: browser-extensions-v${{ github.event.inputs.version }}
-          path: release/
-          if-no-files-found: error 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
