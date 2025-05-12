@@ -194,6 +194,7 @@ public/
 ## Build directory
 extension/
 dist/
+release/
 .awcache
 
 # yarn 2
