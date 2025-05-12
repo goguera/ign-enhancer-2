@@ -17,6 +17,7 @@
  *   --tag <tag>          Tag for the GitHub release (default: vX.Y.Z from package.json)
  *   --notes <path>       Path to release notes file (default: RELEASE_NOTES.md if exists)
  *   --token <token>      GitHub token (default: uses GITHUB_TOKEN env var)
+ *   --dry-run            Dry run mode (no actual release creation)
  */
 
 const fs = require('fs');
@@ -41,7 +42,8 @@ const options = {
   githubRelease: args.includes('--github-release'),
   tag: getArgValue(args, '--tag') || `v${package.version}`,
   notes: getArgValue(args, '--notes'),
-  token: getArgValue(args, '--token') || process.env.GITHUB_TOKEN
+  token: getArgValue(args, '--token') || process.env.GITHUB_TOKEN,
+  dryRun: args.includes('--dry-run')
 };
 
 // Main execution
@@ -71,9 +73,7 @@ async function buildExtensions() {
   
   // Detect package manager
   let packageManager = 'npm';
-  if (fs.existsSync('yarn.lock')) {
-    packageManager = 'yarn';
-  } else if (fs.existsSync('pnpm-lock.yaml')) {
+  if (fs.existsSync('pnpm-lock.yaml')) {
     packageManager = 'pnpm';
   }
   
@@ -121,7 +121,7 @@ async function prepareReleaseDirectory() {
 async function createGitHubRelease() {
   console.log('\n🌐 Creating GitHub release...');
   
-  if (!options.token) {
+  if (!options.token && !options.dryRun) {
     throw new Error('GitHub token is required. Set GITHUB_TOKEN environment variable or use --token option.');
   }
   
@@ -145,6 +145,22 @@ async function createGitHubRelease() {
   
   if (!releaseNotes) {
     releaseNotes = `# IGN Enhancer 2 ${options.tag}\n\nRelease generated automatically by publish script.`;
+  }
+  
+  // If this is a dry run, just log what would happen
+  if (options.dryRun) {
+    console.log(`\n✓ DRY RUN: Would create release ${options.tag} for ${owner}/${repo}`);
+    console.log(`✓ DRY RUN: Release notes: ${releaseNotes.split('\n')[0]}...`);
+    
+    const releaseFiles = fs.readdirSync(RELEASE_DIR);
+    for (const file of releaseFiles) {
+      const filePath = path.join(RELEASE_DIR, file);
+      const fileStats = fs.statSync(filePath);
+      console.log(`✓ DRY RUN: Would upload ${file} (${formatFileSize(fileStats.size)})`);
+    }
+    
+    console.log('✅ GitHub release dry run completed');
+    return;
   }
   
   // Initialize Octokit

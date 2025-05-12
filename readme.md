@@ -163,14 +163,14 @@ yarn build:opera
 
 ## Publishing
 
-The extension includes a publish script that automates the build and release process:
+The extension includes a release script that automates the build and release process:
 
 ```
-npm run publish
+npm run release
 # or
-yarn publish
+yarn release
 # or
-pnpm publish
+pnpm release
 ```
 
 This will:
@@ -182,11 +182,11 @@ This will:
 To create a GitHub release and upload the extension packages:
 
 ```
-npm run publish -- --github-release
+npm run release -- --github-release
 # or
-yarn publish --github-release
+yarn release --github-release
 # or
-pnpm publish -- --github-release
+pnpm release -- --github-release
 ```
 
 For more options and details, see the [Publish Script Documentation](./scripts/README.md).

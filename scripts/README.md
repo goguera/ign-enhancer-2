@@ -1,4 +1,4 @@
-# IGN Enhancer 2 - Publish Script
+# IGN Enhancer 2 - Release Script
 
 This script automates the build and release process for the IGN Enhancer 2 browser extension.
 
@@ -17,11 +17,11 @@ This script automates the build and release process for the IGN Enhancer 2 brows
 To build and package the extension:
 
 ```bash
-npm run publish
+npm run release
 # or
-yarn publish
+yarn release
 # or
-pnpm publish
+pnpm release
 ```
 
 This will:
@@ -34,22 +34,22 @@ This will:
 To create a GitHub release:
 
 ```bash
-npm run publish -- --github-release
+npm run release -- --github-release
 # or
-yarn publish --github-release
+yarn release --github-release
 # or
-pnpm publish -- --github-release
+pnpm release -- --github-release
 ```
 
 This requires a GitHub token with appropriate permissions. You can:
 
 1. Set the `GITHUB_TOKEN` environment variable
-2. Or pass the token directly: `npm run publish -- --github-release --token YOUR_TOKEN`
+2. Or pass the token directly: `npm run release -- --github-release --token YOUR_TOKEN`
 
 ### Additional Options
 
 ```bash
-npm run publish -- --github-release --tag v2.1.0 --notes CHANGELOG.md
+npm run release -- --github-release --tag v2.1.0 --notes CHANGELOG.md
 ```
 
 Options:
@@ -57,6 +57,17 @@ Options:
 - `--tag <tag>`: Specify the tag for the GitHub release (default: v{version} from package.json)
 - `--notes <path>`: Path to release notes file (default: RELEASE_NOTES.md if it exists)
 - `--token <token>`: GitHub token (default: GITHUB_TOKEN environment variable)
+- `--dry-run`: Test the GitHub release process without actually creating a release
+
+### Testing GitHub Releases
+
+You can test the GitHub release functionality without actually creating a release:
+
+```bash
+npm run release -- --github-release --dry-run
+```
+
+This will show you what would be uploaded and how the release would be configured.
 
 ## GitHub Token
 
@@ -83,7 +94,7 @@ jobs:
           node-version: '16'
       - run: npm ci
       - name: Build and Release
-        run: npm run publish -- --github-release
+        run: npm run release -- --github-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ``` 
